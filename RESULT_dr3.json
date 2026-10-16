@@ -1,0 +1,16 @@
+{
+  "S_obs": 0.06589500647839652,
+  "p_newton": 0.16696660667866425,
+  "p_mond": 0.1349730053989202,
+  "p_newton_gauss": 0.16481333971176787,
+  "p_mond_gauss": 0.13609500763281024,
+  "S_newton_mean": 0.004765830490531434,
+  "S_mond_mean": 0.14658367079715826,
+  "sigma_S": 0.06270520171538364,
+  "separation_sigma": 2.076154786779097,
+  "verdict": "Non concluant",
+  "N": 1189,
+  "binned_log10_newton_over_mond": 0.7892095227772278,
+  "unblinded_utc": "2026-10-16T19:07:32Z",
+  "freeze_manifest": "67f088f987b39333f7d7960dd640b5331fd9495b765577fc9bc50a7fceaf6c52"
+}

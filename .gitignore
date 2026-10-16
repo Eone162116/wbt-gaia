@@ -1,0 +1,6 @@
+*.csv
+!multiverse_dr3.csv
+!exploration_dr3/*.csv
+*.pkl
+.venv/
+__pycache__/

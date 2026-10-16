@@ -1,0 +1,33 @@
+{
+  "_comment": "Configuration figée du pré-enregistrement WBT. Toute modification après le dépôt est un écart documenté.",
+  "release": "dr4",
+  "tap": {
+    "url": "https://gea.esac.esa.int/tap-server/tap/sync",
+    "schema": {"dr3": "gaiadr3", "dr4": "gaiadr4"},
+    "row_limit": 50000,
+    "plx_min_catalog": 4.5,
+    "snr_catalog": 10
+  },
+  "columns_base": ["source_id", "ra", "dec", "parallax", "parallax_error", "pmra", "pmra_error", "pmdec", "pmdec_error",
+                   "pmra_pmdec_corr", "phot_g_mean_mag", "bp_rp", "radial_velocity", "radial_velocity_error", "ruwe",
+                   "ipd_frac_multi_peak"],
+  "columns_dr4_extra": ["astrometry_origin", "radial_velocity_origin", "unreliable_astrometry", "blended",
+                        "rv_assumed_sb2", "fraction_double_lined", "rv_renormalised_gof"],
+  "flags_table": {"table": "all_source_flags", "columns": ["non_single_star", "sea_env_flag"]},
+  "primary": {
+    "snr_main": 40, "dmax": 150, "smin": 1000, "smax": 30000, "vtmax": 2.5, "svt": 0.1, "ruwe": 1.25,
+    "drv": 10, "dvsky": 10, "sph": true, "hr": true, "hr_height": 0.8, "hr_intercept": null, "ipd": true,
+    "degroup": "snr10", "screen": "dr4", "rv_gof_max": 4.0
+  },
+  "statistic": {"x_low": 0.3, "x_high": 1.0},
+  "calibration": {"n_mocks": 5000, "seed": 20261202, "eccentricity": "thermal"},
+  "decision": {"p_threshold": 0.00135, "n_min_powered": 1000, "n_target": 2000},
+  "multiverse": {
+    "degroup": [null, "snr40", "snr10"],
+    "screen": ["dr3", "dr4"],
+    "hr": [null, 1.2, 0.8],
+    "sph": [false, true],
+    "dmax": [130, 150, 200],
+    "ruwe": [1.4, 1.25]
+  }
+}
