@@ -4,3 +4,5 @@
 *.pkl
 .venv/
 __pycache__/
+!validation_epoch/*.csv
+*.xml

@@ -23,6 +23,7 @@ La clé d'aveuglement est créée automatiquement dans `~/.wbt_blind_key`, hors 
 
    Le découpage est dimensionné sur le `COUNT(*)` serveur. Les tranches tronquées sont recoupées automatiquement. La complétude est vérifiée sur les identifiants uniques.
 3. **Construction.** `python run_wbt.py dr4 build` : paires, cinématique, crible DR4, puis `all_source_flags` pour les seuls candidats.
+3b. **Crible par époques.** `python run_wbt.py dr4 epoch` : astrométrie par époque (DataLink) des composantes candidates, tests d'accélération et UWE (`epoch_accel.py`). Si DataLink échoue, télécharger depuis l'archive et indiquer le fichier via `WBT_EPOCH_FILE`.
 4. **Analyse aveugle.** `python run_wbt.py dr4 blind` : contrôles sur N et sur la répartition en r/rM, S permuté ≈ 0, puis 5000 simulations Newton et 5000 MOND.
 5. **Gel.** `python run_wbt.py dr4 freeze`, puis publier `FREEZE_dr4.json` par un commit horodaté **avant** la levée.
 6. **Levée.** `python run_wbt.py dr4 unblind` produit `RESULT_dr4.json`, qui porte l'empreinte du gel. La levée est refusée si le code, la configuration, l'échantillon ou les simulations ont changé depuis le gel.
@@ -60,6 +61,19 @@ Lecture : avec la spécification pré-enregistrée, DR3 ne tranche pas. La valeu
 Dans le multivers, sans dégroupage, S ≈ +0,15, l'amplitude MOND exacte, produite par de la contamination. Avec dégroupage, S ≈ +0,05, un résidu inexpliqué que le crible direct de DR4 doit trancher.
 
 L'exploration antérieure (multivers de 144 spécifications, test d'injection-récupération) se trouve dans `exploration_dr3/`. Elle est déclarée dans le pré-enregistrement.
+
+## Crible par astrométrie par époque (v0.4)
+
+Chaque composante est ajustée par un modèle simple (5 paramètres), avec accélération (7) puis avec variation de l'accélération (9), sur les positions le long du balayage moyennées par transit. Une composante est signalée si un test F d'accélération donne p < 0,001 ou si l'UWE du modèle simple dépasse 1,4. Une binaire large de quelques kau produit environ 1e-4 mas/an² à 130 pc, indétectable : toute détection signale un compagnon proche.
+
+Validation sur la pré-publication DR4 (12 sources, juin 2026), dans `validation_epoch/` :
+
+- les 9 sources simples ou QSO passent, et les parallaxes sont retrouvées à mieux que 1 % ;
+- les 3 binaires orbitales sont signalées : HD 114762 et Gaia-4 par l'UWE (3,0 et 2,5), Gaia BH3 par l'accélération (12σ) ;
+- le taux de faux positifs est de 0,25 % ;
+- injection de compagnons cachés (primaire 0,6 M☉ à 130 pc) : détection d'au moins 50 % pour a_in ≈ 0,1–20 au (0,2–15 au si q = 0,1).
+
+Angle mort restant : au-delà d'environ 30 au, l'accélération devient trop faible sur 5,5 ans. À 130 pc, le crible doit alors être pris en charge par les drapeaux image (`ipd_frac_multi_peak`, `sea_env_flag`, `nss_resolved_pair`), dont la limite de résolution reste à quantifier.
 
 ## Changements v0.3
 

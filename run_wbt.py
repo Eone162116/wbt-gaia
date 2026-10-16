@@ -13,7 +13,7 @@ import calibrate as cal, blind as bl
 CFG = json.load(open("config_prereg.json", encoding="utf-8"))
 REL = sys.argv[1]; STAGE = sys.argv[2]
 P = CFG["primary"]; ST = CFG["statistic"]
-CODE = ["wbt_pipeline.py", "calibrate.py", "blind.py", "run_wbt.py", "fetch_gaia.py", "config_prereg.json"]
+CODE = ["wbt_pipeline.py", "calibrate.py", "blind.py", "run_wbt.py", "fetch_gaia.py", "epoch_accel.py", "config_prereg.json"]
 pattern = f"{REL}_*.csv" if glob.glob(f"{REL}_*.csv") else "s40_*.csv"      # s40_* = tranches DR3 de développement
 
 def log(*a):
@@ -23,7 +23,7 @@ def log(*a):
 def primary_selection(K):
     b, slope, _ = hr_band(K)
     if P["hr_intercept"] is not None: b = P["hr_intercept"]
-    kw = {k: P[k] for k in ["dmax", "smin", "smax", "vtmax", "svt", "ruwe", "drv", "dvsky", "sph", "hr", "ipd", "degroup", "screen"]}
+    kw = {k: P[k] for k in ["dmax", "smin", "smax", "vtmax", "svt", "ruwe", "drv", "dvsky", "sph", "hr", "ipd", "degroup", "screen", "epoch"]}
     m, vt = select(K, (b, slope, P["hr_height"]), **kw)
     return m, vt, b
 
@@ -45,8 +45,30 @@ if STAGE in ("build", "all"):
         log(f"flags récupérés pour {len(F)} sources ; paires candidates propres : {K.flags_ok[cand].mean():.3f}")
     K.to_pickle(f"K_{REL}.pkl")
 
+if STAGE == "epoch" or (STAGE == "all" and REL == "dr4"):
+    if REL != "dr4": raise SystemExit("astrométrie par époque disponible seulement pour DR4")
+    import epoch_accel as ea
+    K = pd.read_pickle(f"K_{REL}.pkl"); E = CFG["epoch"]; G = CFG["multiverse"]
+    # candidates = union des sélections les plus larges du multivers, hors crible par époques (≈ 12 000 composantes sur DR3)
+    hb, hs, _ = hr_band(K); cand = np.zeros(len(K), bool)
+    for sph in (False, True):
+        mm, _ = select(K, (hb, hs, 0.8), hr=False, sph=sph, dmax=max(G["dmax"]), ruwe=max(G["ruwe"]),
+                       degroup=None, screen="dr3", ipd=False, epoch=False)
+        cand |= mm
+    ids = np.unique(np.concatenate([K.sid1[cand], K.sid2[cand]]))
+    log(f"crible par époques : téléchargement pour {len(ids)} composantes (≈ {len(ids)*0.15/1000:.1f} Go en RAW)")
+    raw = ea.load_epoch_file(os.environ["WBT_EPOCH_FILE"]) if os.environ.get("WBT_EPOCH_FILE") else ea.fetch_epoch_dr4(ids)
+    St = ea.test_all(ea.transits_from_table(raw)); St.to_csv(f"epoch_stats_{REL}.csv", index=False)
+    bad = set(St.source_id[ea.flag(St, E["p_acc"], E["uwe_max"]) | (St.n_transits < E["min_transits"])])
+    have = set(St.source_id); ok = lambda s: (s in have) and (s not in bad)
+    K["epoch_ok"] = [ok(a) and ok(b) for a, b in zip(K.sid1, K.sid2)]
+    log(f"crible par époques : {len(ids)} composantes candidates, {len(have)} avec données, {len(bad)} signalées ;"
+        f" paires candidates retenues : {K.epoch_ok[cand].mean():.3f}")
+    K.to_pickle(f"K_{REL}.pkl")
+
 if STAGE in ("blind", "all"):
     K = pd.read_pickle(f"K_{REL}.pkl"); m, vt, b = primary_selection(K)
+    if P.get("epoch") and "epoch_ok" not in K.columns: log("crible par époques absent (étape epoch non lancée ou DR3) : ignoré")
     S = K[m]; x = S.x.values; vc = S.vc.values; sv = (S.svt*S.vc).values; N = len(S)
     vt_blind = bl.blind(vt[m])
     log(f"[AVEUGLE] spécification principale : N = {N} (cible {CFG['decision']['n_target']}, minimum {CFG['decision']['n_min_powered']})"
@@ -96,7 +118,7 @@ if STAGE == "multiverse":
     G = CFG["multiverse"]; rows = []
     for combo in itertools.product(*G.values()):
         spec = dict(zip(G.keys(), combo)); hrh = spec.pop("hr")
-        if REL == "dr3" and spec["screen"] == "dr4": continue
+        if REL == "dr3" and (spec["screen"] == "dr4" or spec.get("epoch")): continue
         m, vt = select(K, (b, slope, hrh or 0.8), hr=hrh is not None, ipd=P["ipd"], **spec)
         x, v = K.x.values[m], vt[m]
         rows.append(dict(**spec, hr=hrh, n=int(m.sum()), S=cal.step_stat(x, v, ST["x_low"], ST["x_high"])))

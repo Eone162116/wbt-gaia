@@ -1,16 +1,17 @@
 {
-  "frozen_at_utc": "2026-10-16T19:07:26Z",
+  "frozen_at_utc": "2026-10-16T21:24:13Z",
   "files": {
-    "wbt_pipeline.py": "03f3c137ee03470e0b673de8959cead5067a49ee0e1cffe4b373dc3481d3f451",
+    "wbt_pipeline.py": "44fd732a4cb348a3b2ab5d716aa516683f9909a653e786151bfd8c7771db0e05",
     "calibrate.py": "e83f84759949cce0b0045d1f1fd284ce8560f3ee96f9445f0ec508a21ad8e56c",
     "blind.py": "ac581a29eaf183497dc08107ea8144483dc5ab263391ce9a5ca6f3bb5e97b504",
-    "run_wbt.py": "a983c47f274dcc93657b1af3c3942f9a567e6a745a36609b6a093a4c4f106de6",
+    "run_wbt.py": "1de37d27a2b6043eaaae2f36d88b1e5647f87429da26996c0994b9c28c64c8da",
     "fetch_gaia.py": "0e794bc337d921e17a29ff807c616577cbf014365a8c6d53fa9fe108944636ab",
-    "config_prereg.json": "cbf8a23615068f69446e99e4bb2c4da72a71bb33e0cc327377bb4c97f04d5534",
+    "epoch_accel.py": "a6ed8cca4f5bfb0fb7f39d9993217f8f1a37fc5eb295c8326feef379706c7fff",
+    "config_prereg.json": "39946945d9b574d17a9c3f90a79881a9319359e2f77c3cdf209789ae6252ed7f",
     "mocks_dr3.csv": "56fa9320108092512e29175714a2ebe5f9bdf4913078b7e5ea2338255828b4b1"
   },
   "arrays": {
     "sample_ids": "270252d193c09ec38afd57a154c442f34ed2694315a8ec25ea8d5a17a8de1381"
   },
-  "manifest_sha256": "67f088f987b39333f7d7960dd640b5331fd9495b765577fc9bc50a7fceaf6c52"
+  "manifest_sha256": "f61805ed786c8943f6f314849397858b13bee4415643251e4a42a3eb327a84a5"
 }

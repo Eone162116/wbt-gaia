@@ -165,7 +165,7 @@ def in_hr(c, MG, b, slope, height):
 
 # --------------------------------------------------------------------------- coupes paramétrées
 BASE = dict(dmax=130, smin=1000, smax=30000, vtmax=2.5, svt=0.1, ruwe=1.25, drv=10, dvsky=10,
-            sph=True, hr=True, ipd=False, degroup="snr10", screen="dr3")
+            sph=True, hr=True, ipd=False, degroup="snr10", screen="dr3", epoch=False)
 
 def select(K, hrpar, **kw):
     o = {**BASE, **kw}
@@ -180,6 +180,8 @@ def select(K, hrpar, **kw):
         m &= K.ipd_max == 0
     if o["screen"] == "dr4":
         m &= K.scr4 & K.flags_ok
+    if o["epoch"] and "epoch_ok" in K.columns:      # absent sur DR3 : ignoré (signalé dans le journal)
+        m &= K.epoch_ok
     if o["degroup"] == "snr10": m &= K.nc10 == 1
     elif o["degroup"] == "snr40": m &= K.nc40 == 1
     return m.values, vt.values
