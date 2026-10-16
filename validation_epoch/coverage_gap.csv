@@ -1,0 +1,5 @@
+q,m2,dG,G2,epoch_lo_au,epoch_hi_au,image_res50_au,image_diffraction_au,gap_pessimiste,gap_optimiste
+0.1,0.06,9.1,23.1,0.22,14.7,,,> 15 au (compagnon trop faible : jamais imagé),> 15 au
+0.2,0.12,6.1,20.1,0.1,21.5,276.0,24.0,22–276 au,22–24 au
+0.4,0.24,3.5,17.5,0.07,21.5,154.0,24.0,22–154 au,22–24 au
+0.7,0.42,1.7,15.6,0.07,31.6,125.0,24.0,32–125 au,aucun
