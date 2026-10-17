@@ -17,8 +17,15 @@ def _key():
 def blind(vt):
     return np.random.default_rng(_key()).permutation(np.asarray(vt))
 
+TEXT_EXT = (".py", ".json", ".csv", ".txt", ".md")
+
 def sha256_file(p):
+    """Fichiers texte : CRLF ramené à LF avant hachage (v0.7-D2), pour que l'empreinte survive aux conversions
+    de fins de ligne (Windows, Git). Fichiers binaires (.pkl, .npy) : octet par octet."""
     h = hashlib.sha256()
+    if str(p).lower().endswith(TEXT_EXT):
+        h.update(open(p, "rb").read().replace(b"\r\n", b"\n"))
+        return h.hexdigest()
     with open(p, "rb") as f:
         for chunk in iter(lambda: f.read(1 << 20), b""): h.update(chunk)
     return h.hexdigest()

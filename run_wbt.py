@@ -153,7 +153,7 @@ if STAGE in ("blind", "all"):
         ctrl["f_in_comparaison"] = dict(epoques=band, ruwe_grille_dr3_approchee=band_r, recouvrement=bool(ov))
     else:
         ctrl["f_in_comparaison"] = "non applicable (un seul drapeau disponible)"
-    json.dump(ctrl, open(f"CONTROLS_{REL}_aveugle.json", "w", encoding="utf-8"), indent=2, default=float, ensure_ascii=False)
+    json.dump(ctrl, open(f"CONTROLS_{REL}_aveugle.json", "w", encoding="utf-8", newline="\n"), indent=2, default=float, ensure_ascii=False)
     log("contrôles avant levée : " + " ; ".join(f"{k} {'OK' if isinstance(v, dict) and v.get('ok', v.get('recouvrement', True)) else ('—' if isinstance(v, str) else 'ÉCHEC')}" for k, v in ctrl.items()))
 
 def frozen_arrays():
