@@ -1,0 +1,20 @@
+{
+  "permutation": {
+    "S_aveugle": -0.08573499162158138,
+    "moyenne_permutations": -0.00016704842003193953,
+    "ecart_type": 0.07311202804088565,
+    "z": -1.170367523572157,
+    "ok": true
+  },
+  "injection": {
+    "S_newton_moyen": 0.006493969448166223,
+    "S_mond_moyen": 0.15058480591027168,
+    "ok": true
+  },
+  "effectifs": {
+    "n_bas": 567,
+    "n_haut": 155,
+    "ok": true
+  },
+  "f_in_comparaison": "non applicable (un seul drapeau disponible)"
+}

@@ -17,7 +17,9 @@ CODE = ["wbt_pipeline.py", "calibrate.py", "blind.py", "run_wbt.py", "fetch_gaia
         "finfer.py", "validation_contamination/pgrid.npy", "validation_contamination/pgrid_dr3.npy", "config_prereg.json"]
 def frozen_files():
     mes = CFG["calibration"]["contamination"].get("f_in_mode") == "mesure"
-    return CODE + [f"mocks_{REL}.csv", f"envelope_{REL}.csv"] + ([f"finfer_{REL}.csv"] if mes else [])
+    return (CODE + [f"mocks_{REL}.csv", f"envelope_{REL}.csv"] + ([f"finfer_{REL}.csv"] if mes else [])
+            + [f"K_{REL}.pkl", f"sample_{REL}.csv", f"CONTROLS_{REL}_aveugle.json"]      # v0.7-D : données analysées et contrôles
+            + ([f"epoch_stats_{REL}.csv"] if REL == "dr4" else []))
 pattern = f"{REL}_*.csv" if glob.glob(f"{REL}_*.csv") else "s40_*.csv"      # s40_* = tranches DR3 de développement
 
 def log(*a):
@@ -77,7 +79,9 @@ if STAGE == "epoch" or (STAGE == "all" and REL == "dr4"):
 
 if STAGE in ("blind", "all"):
     K = pd.read_pickle(f"K_{REL}.pkl"); m, vt, b = primary_selection(K)
-    if P.get("epoch") and "epoch_ok" not in K.columns: log("crible par époques absent (étape epoch non lancée ou DR3) : ignoré")
+    if P.get("epoch") and "epoch_ok" not in K.columns:      # v0.7-D : bloquant sur DR4
+        if REL == "dr4": raise SystemExit("ARRÊT : crible par époques obligatoire sur DR4 (primary.epoch). Lance d'abord : python run_wbt.py dr4 epoch")
+        log("crible par époques absent (DR3, répétition) : ignoré")
     S = K[m]; x = S.x.values; vc = S.vc.values; N = len(S)
     sv = np.stack([S.cv_aa, S.cv_ad, S.cv_dd, S.fd], 1) if "cv_aa" in S.columns else (S.svt*S.vc).values   # v0.7-C
     vt_blind = bl.blind(vt[m])
@@ -132,6 +136,25 @@ if STAGE in ("blind", "all"):
     log(f"enveloppe de contamination ({CC['screen']}, {time.time()-t2:.0f} s) : S newtonien moyen : "
         + ", ".join(f"{sh[:8]} {f:.2f} → {v:+.3f}" for (sh, f), v in g.mean().items())
         + f" ; séparation pire MOND vs pire Newton : {(min(mocks[c].mean() for c in mocks.columns if c.startswith('mond')) - max(g.mean().max(), mocks.newton.mean()))/mocks.newton.std():.1f} σ")
+    # v0.7-D : contrôles avant levée (section 14), archivés et gelés
+    rng_c = np.random.default_rng(12345); vt_m = vt[m]
+    perm = np.array([cal.step_stat(x, rng_c.permutation(vt_m), ST["x_low"], ST["x_high"]) for _ in range(500)])
+    s_bl = cal.step_stat(x, vt_blind, ST["x_low"], ST["x_high"]); z_perm = (s_bl - np.nanmean(perm))/np.nanstd(perm)
+    nlo_c, nhi_c = int((x < ST["x_low"]).sum()), int((x > ST["x_high"]).sum())
+    ctrl = dict(
+        permutation=dict(S_aveugle=s_bl, moyenne_permutations=float(np.nanmean(perm)), ecart_type=float(np.nanstd(perm)), z=float(z_perm), ok=bool(abs(z_perm) < 3)),
+        injection=dict(S_newton_moyen=float(mocks.newton.mean()), S_mond_moyen=float(mocks.mond.mean()),
+                       ok=bool(abs(mocks.newton.mean()) < 0.02 and mocks.mond.mean() > 0.10)),
+        effectifs=dict(n_bas=nlo_c, n_haut=nhi_c, ok=bool(min(nlo_c, nhi_c) >= CFG["decision"].get("n_min_per_zone", 0))))
+    if CC.get("f_in_mode") == "mesure" and REL == "dr4":
+        band_r, rr, _ = fi.infer_band((Cd.ruwe_max > 1.25).values, _mass(Cd.MG1.values), _mass(Cd.MG2.values), Cd.d.values, Cd.rsky.values,
+                                      CC["shapes"], "dr3", CC["r0"]["dr3"], CC["nsig"], seed=C["seed"], stability=CC["stability"], q_range=CC["q_range"])
+        ov = all(min(band[sh][2], band_r[sh][2]) >= max(band[sh][0], band_r[sh][0]) for sh in band)
+        ctrl["f_in_comparaison"] = dict(epoques=band, ruwe_grille_dr3_approchee=band_r, recouvrement=bool(ov))
+    else:
+        ctrl["f_in_comparaison"] = "non applicable (un seul drapeau disponible)"
+    json.dump(ctrl, open(f"CONTROLS_{REL}_aveugle.json", "w", encoding="utf-8"), indent=2, default=float, ensure_ascii=False)
+    log("contrôles avant levée : " + " ; ".join(f"{k} {'OK' if isinstance(v, dict) and v.get('ok', v.get('recouvrement', True)) else ('—' if isinstance(v, str) else 'ÉCHEC')}" for k, v in ctrl.items()))
 
 def frozen_arrays():
     s = pd.read_csv(f"sample_{REL}.csv")
@@ -154,6 +177,17 @@ if STAGE == "unblind":
     if res["N"] < CFG["decision"]["n_min_powered"]: res["verdict"] += " — étude déclarée sous-dimensionnée"
     nlo, nhi = int((x < ST["x_low"]).sum()), int((x > ST["x_high"]).sum()); res.update(n_bas=nlo, n_haut=nhi)
     if min(nlo, nhi) < CFG["decision"].get("n_min_per_zone", 0): res["verdict"] += " — zone de x sous-dimensionnée"
+    # v0.7-D : contrôle en régime newtonien (forte accélération, x < 0,3), attendu proche de zéro sous les deux hypothèses
+    def _s_newt(xx, vv):
+        lo, hi = vv[xx < 0.15], vv[(xx >= 0.15) & (xx < 0.3)]
+        return np.median(hi)/np.median(lo) - 1 if len(lo) >= 10 and len(hi) >= 10 else np.nan
+    Ssub = K[m]; sv_c = np.stack([Ssub.cv_aa, Ssub.cv_ad, Ssub.cv_dd, Ssub.fd], 1); rng_c = np.random.default_rng(54321)
+    simN = np.array([_s_newt(*cal.simulate(Ssub.x.values, Ssub.vc.values, sv_c, "newton", rng_c, P["vtmax"], P["dvsky"], "thermal", Ssub.rsky.values)) for _ in range(1000)])
+    simM = np.array([_s_newt(*cal.simulate(Ssub.x.values, Ssub.vc.values, sv_c, "mond", rng_c, P["vtmax"], P["dvsky"], "thermal", Ssub.rsky.values)) for _ in range(1000)])
+    s_n = _s_newt(x, v); z_n = (s_n - np.nanmean(simN))/np.nanstd(simN)
+    ctrl_l = dict(regime_newtonien=dict(S_obs=s_n, attendu_newton=float(np.nanmean(simN)), attendu_mond=float(np.nanmean(simM)),
+                                        ecart_type=float(np.nanstd(simN)), z=float(z_n), ok=bool(abs(z_n) < 3)))
+    res["controles"] = dict(avant_levee=json.load(open(f"CONTROLS_{REL}_aveugle.json", encoding="utf-8")), a_la_levee=ctrl_l)
     json.dump(res, open(f"RESULT_{REL}.json", "w", encoding="utf-8"), indent=2, default=float)
     log("[LEVÉE]", json.dumps(res, indent=1, default=float, ensure_ascii=False))
 

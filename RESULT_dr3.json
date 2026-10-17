@@ -150,8 +150,40 @@
   "verdict": "Non concluant",
   "N": 1189,
   "binned_log10_newton_over_mond": 0.6692543639227049,
-  "unblinded_utc": "2026-10-17T10:24:06Z",
-  "freeze_manifest": "306a67eb86bd2bc23deb625156f0a859872d87485f4ea9c0e292ef29c2efa93c",
+  "unblinded_utc": "2026-10-17T11:40:45Z",
+  "freeze_manifest": "4a781bbabb38f579ea263d39163b9decb881bc980946f234c5c6873c7d80fb32",
   "n_bas": 567,
-  "n_haut": 155
+  "n_haut": 155,
+  "controles": {
+    "avant_levee": {
+      "permutation": {
+        "S_aveugle": -0.08573499162158138,
+        "moyenne_permutations": -0.00016704842003193953,
+        "ecart_type": 0.07311202804088565,
+        "z": -1.170367523572157,
+        "ok": true
+      },
+      "injection": {
+        "S_newton_moyen": 0.006493969448166223,
+        "S_mond_moyen": 0.15058480591027168,
+        "ok": true
+      },
+      "effectifs": {
+        "n_bas": 567,
+        "n_haut": 155,
+        "ok": true
+      },
+      "f_in_comparaison": "non applicable (un seul drapeau disponible)"
+    },
+    "a_la_levee": {
+      "regime_newtonien": {
+        "S_obs": -0.05102634391432992,
+        "attendu_newton": 0.0035640750226743514,
+        "attendu_mond": 0.020026254382016634,
+        "ecart_type": 0.06878345615325537,
+        "z": -0.7936562363974876,
+        "ok": true
+      }
+    }
+  }
 }

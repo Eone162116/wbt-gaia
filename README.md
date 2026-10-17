@@ -89,6 +89,10 @@ Essais écartés : une marche fondée sur le quartile inférieur de ṽ au lieu 
 ## Changements v0.7 (audit externe du 17/10/2026)
 
 - **v0.7-A** : équation MOND conforme à Cookson et al. 2026 (éq. 7). Le terme de champ externe est [tanh(0,825 g_N,e/g_N,i)]^3,7, et non tanh((·)^3,7). L'écart sur le boost allait jusqu'à 1,5 % vers x ≈ 1. Test de conformité : `python tests/test_mond_eq7.py`. Les scripts archivés de `exploration_dr3/` gardent l'ancienne forme, comme trace de l'exploration.
+- **v0.7-D** : verrouillage et contrôles.
+    - **Gel** : il couvre aussi les données analysées (`K_<rel>.pkl`, `sample_<rel>.csv`), les contrôles avant levée et, sur DR4, les statistiques du crible par époques.
+    - **Arrêt bloquant** : sur DR4, l'analyse s'arrête si le crible par époques exigé est absent.
+    - **Contrôles de la section 14** : ils sont exécutés et archivés. Avant la levée, dans `CONTROLS_<rel>_aveugle.json`, qui est gelé : permutation, injection-récupération, effectifs par zone, comparaison des deux mesures de f_in. À la levée, dans `RESULT_<rel>.json` : contrôle en régime newtonien, c'est-à-dire de forte accélération, à x < 0,3.
 - **v0.7-B** : recalibration.
     - **Volume** : 50 000 simulations par hypothèse pure et 20 000 par scénario de contamination, vectorisées par lots.
     - **Règle de rejet** : la borne haute de Clopper-Pearson à 95 % de la probabilité de queue et l'approximation gaussienne doivent toutes deux passer sous 0,00135. Une seule simulation extrême ne peut plus renverser un verdict.
