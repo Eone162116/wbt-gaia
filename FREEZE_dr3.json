@@ -1,8 +1,8 @@
 {
-  "frozen_at_utc": "2026-10-17T06:01:58Z",
+  "frozen_at_utc": "2026-10-17T06:47:25Z",
   "files": {
-    "wbt_pipeline.py": "44fd732a4cb348a3b2ab5d716aa516683f9909a653e786151bfd8c7771db0e05",
-    "calibrate.py": "5387af0e3f632f0039eed5ef650393a43ad5391cd8930b038d57e37a6e68ee21",
+    "wbt_pipeline.py": "e943f0db42151ba8857172a66143ae462e711dde63a35f93ca4323b9f58ca244",
+    "calibrate.py": "e49fa881663fecb6677498db2a27a1116c49210e955f2131a9089d5679e2b8b3",
     "blind.py": "ac581a29eaf183497dc08107ea8144483dc5ab263391ce9a5ca6f3bb5e97b504",
     "run_wbt.py": "13930b2caa2f9554c607197744ea46af4351a64f49deb8bb6695439ae22f8342",
     "fetch_gaia.py": "0e794bc337d921e17a29ff807c616577cbf014365a8c6d53fa9fe108944636ab",
@@ -12,12 +12,12 @@
     "validation_contamination/pgrid.npy": "8bb4ebefaf8b581b2f71adcf01ea6141b85380068bd78f25ee5c246262b5b6c0",
     "validation_contamination/pgrid_dr3.npy": "54dff79c0354bc4fbcea00b50818aeb01316527b70fb80f2721e3507989c255c",
     "config_prereg.json": "f6c525e02e104d0711bf94790bc5ca0cd8ccb20cb7b51893cf24c00c680819c6",
-    "mocks_dr3.csv": "56fa9320108092512e29175714a2ebe5f9bdf4913078b7e5ea2338255828b4b1",
+    "mocks_dr3.csv": "c9a6c980b50a26103de04a71da8edfadd4d8a78de6314d66116db673213d56db",
     "envelope_dr3.csv": "c1280c5f70a13364c03d6afe0ea6674acf0ea44e4fe4287fb6e5a83b3db76c77",
     "finfer_dr3.csv": "fe02a5cb71e95dc3c65b7010e23463ca2fcfc3b5824407073e0cefbd2a704a59"
   },
   "arrays": {
     "sample_ids": "270252d193c09ec38afd57a154c442f34ed2694315a8ec25ea8d5a17a8de1381"
   },
-  "manifest_sha256": "9ad991e900db01c962059ed4220256f6a410453868d83cc24e8d64e9e15bfb2a"
+  "manifest_sha256": "77d121dce888798e4be4716233d01e3434f3d986e26200639f1f25cbead774eb"
 }

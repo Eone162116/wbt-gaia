@@ -11,7 +11,7 @@ def step_stat(x, vt, x_low=0.3, x_high=1.0):
 def mond_boost3d(x3):
     gi = 1.0/np.asarray(x3)**2; gt = np.hypot(gi, GNE); h = 1e-4
     Kd = (np.log(nu(gt*(1+h))) - np.log(nu(gt*(1-h)))) / (np.log(1+h) - np.log(1-h))
-    return np.sqrt(nu(gt)*(1 + Kd/3*np.tanh((0.825*GNE/gi)**3.7)))
+    return np.sqrt(nu(gt)*(1 + Kd/3*np.tanh(0.825*GNE/gi)**3.7))   # éq. 7 : [tanh(·)]^3,7 (corrigé v0.7)
 
 def kepler_geometry(n, rng, ecc="thermal"):
     e = np.sqrt(rng.random(n)) if ecc == "thermal" else rng.random(n)

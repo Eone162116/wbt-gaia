@@ -195,7 +195,7 @@ def mond_boost(x):
     gt = np.hypot(gi, GNE)
     h = 1e-4
     K = (np.log(nu(gt*(1+h)))-np.log(nu(gt*(1-h))))/(np.log(1+h)-np.log(1-h))
-    return np.sqrt(nu(gt)*(1+K/3*np.tanh((0.825*GNE/gi)**3.7)))
+    return np.sqrt(nu(gt)*(1+K/3*np.tanh(0.825*GNE/gi)**3.7))   # éq. 7 : [tanh(·)]^3,7 (corrigé v0.7)
 
 EDGES = np.array([0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 6.0])
 

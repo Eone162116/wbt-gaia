@@ -86,6 +86,10 @@ Effet attendu sur DR4 : à N = 5000, la probabilité de rejeter Newton si MOND e
 
 Essais écartés : une marche fondée sur le quartile inférieur de ṽ au lieu de la médiane donne le même biais avec plus de bruit. La médiane est conservée.
 
+## Changements v0.7 (audit externe du 17/10/2026)
+
+- **v0.7-A** : équation MOND conforme à Cookson et al. 2026 (éq. 7). Le terme de champ externe est [tanh(0,825 g_N,e/g_N,i)]^3,7, et non tanh((·)^3,7). L'écart sur le boost allait jusqu'à 1,5 % vers x ≈ 1. Test de conformité : `python tests/test_mond_eq7.py`. Les scripts archivés de `exploration_dr3/` gardent l'ancienne forme, comme trace de l'exploration.
+
 ## Changements v0.3
 
 - **Encodage** : UTF-8 explicite partout ; le journal plantait sous Windows (cp1252).

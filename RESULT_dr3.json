@@ -3,14 +3,14 @@
   "p_newton": 0.3026973026973027,
   "p_newton_gauss": 0.3180791800812776,
   "p_newton_pur": 0.16696660667866425,
-  "p_mond": 0.1349730053989202,
-  "p_mond_gauss": 0.13609500763281024,
+  "p_mond": 0.1255748850229954,
+  "p_mond_gauss": 0.12624570891590875,
   "S_newton_mean": 0.004765830490531434,
   "S_newton_env_max": 0.025703212121061674,
-  "S_mond_mean": 0.14658367079715826,
+  "S_mond_mean": 0.1503427207950086,
   "sigma_S": 0.06270520171538364,
-  "separation_sigma": 2.076154786779097,
-  "separation_sigma_env": 1.7696401409428575,
+  "separation_sigma": 2.1259472520040186,
+  "separation_sigma_env": 1.820186022673677,
   "envelope": [
     {
       "shape": "mdwarf_pokemon",
@@ -63,7 +63,7 @@
   ],
   "verdict": "Non concluant",
   "N": 1189,
-  "binned_log10_newton_over_mond": 0.7892095227772278,
-  "unblinded_utc": "2026-10-17T06:02:00Z",
-  "freeze_manifest": "9ad991e900db01c962059ed4220256f6a410453868d83cc24e8d64e9e15bfb2a"
+  "binned_log10_newton_over_mond": 0.9330070608005296,
+  "unblinded_utc": "2026-10-17T06:47:30Z",
+  "freeze_manifest": "77d121dce888798e4be4716233d01e3434f3d986e26200639f1f25cbead774eb"
 }
