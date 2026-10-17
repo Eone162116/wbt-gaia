@@ -1,6 +1,13 @@
-"""Calibration par simulations, utilisable AVANT la levée de l'aveuglement : elle n'utilise que la géométrie
-(r/rM, masse, v_c) et les incertitudes de l'échantillon final, jamais les vitesses observées."""
+"""Calibration par simulations (v0.7-B), utilisable AVANT la levée de l'aveuglement : n'utilise que la géométrie
+(r/rM, séparation, masse, v_c) et les incertitudes de l'échantillon final, jamais les vitesses observées.
+Nouveautés v0.7-B (audit externe du 17/10/2026) :
+  - simulations par lots (vectorisées) : 50 000 par hypothèse pure, 20 000 par scénario de contamination ;
+  - scénarios d'excentricité dépendant de la séparation, p(e) ∝ e^α avec α croissant de α_bas à 1 kau à α_haut à 30 kau
+    (Hwang, Ting & Zakamska 2022 : superthermique au-delà de 10³ au) ; chaque hypothèse est jugée dans le scénario qui lui
+    est le plus favorable ;
+  - règle de rejet sur la borne haute de Clopper-Pearson à 95 % de la probabilité de queue, et sur l'approximation gaussienne."""
 import numpy as np, pandas as pd
+from scipy.stats import beta as _beta, norm as _norm
 from wbt_pipeline import nu, GNE, BASE, observe
 
 def step_stat(x, vt, x_low=0.3, x_high=1.0):
@@ -13,8 +20,22 @@ def mond_boost3d(x3):
     Kd = (np.log(nu(gt*(1+h))) - np.log(nu(gt*(1-h)))) / (np.log(1+h) - np.log(1-h))
     return np.sqrt(nu(gt)*(1 + Kd/3*np.tanh(0.825*GNE/gi)**3.7))   # éq. 7 : [tanh(·)]^3,7 (corrigé v0.7)
 
-def kepler_geometry(n, rng, ecc="thermal"):
-    e = np.sqrt(rng.random(n)) if ecc == "thermal" else rng.random(n)
+def alpha_profile(rsky, a_lo, a_hi, s_lo=1e3, s_hi=3e4):
+    t = np.clip((np.log10(rsky) - np.log10(s_lo))/(np.log10(s_hi) - np.log10(s_lo)), 0, 1)
+    return a_lo + (a_hi - a_lo)*t
+
+def sample_ecc(n, rng, ecc="thermal", rsky=None):
+    """'thermal' (α = 1), 'uniform' (α = 0), nombre α, ou (α_bas, α_haut) avec rsky : p(e) ∝ e^α."""
+    if isinstance(ecc, str):
+        a = {"thermal": 1.0, "uniform": 0.0}[ecc]
+    elif np.ndim(ecc) == 0:
+        a = float(ecc)
+    else:
+        a = alpha_profile(rsky, ecc[0], ecc[1])
+    return np.minimum(rng.random(n)**(1.0/(np.asarray(a) + 1.0)), 0.999)
+
+def kepler_geometry(n, rng, ecc="thermal", rsky=None):
+    e = sample_ecc(n, rng, ecc, rsky)
     Mn = 2*np.pi*rng.random(n); E = Mn.copy()
     for _ in range(40): E = E - (E - e*np.sin(E) - Mn)/(1 - e*np.cos(E))
     r = np.stack([np.cos(E)-e, np.sqrt(1-e**2)*np.sin(E), np.zeros(n)], 1)
@@ -26,25 +47,50 @@ def kepler_geometry(n, rng, ecc="thermal"):
                   np.stack([2*(b*c+a*d), 1-2*(b*b+d*d), 2*(c*d-a*b)], 1),
                   np.stack([2*(b*d-a*c), 2*(c*d+a*b), 1-2*(b*b+c*c)], 1)], 1)
     r = np.einsum("nij,nj->ni", R, r); v = np.einsum("nij,nj->ni", R, v)
-    rsky = np.hypot(r[:, 0], r[:, 1])
-    return v[:, :2]*np.sqrt(rsky)[:, None], np.linalg.norm(r, axis=1)/rsky
+    rsky_ = np.hypot(r[:, 0], r[:, 1])
+    return v[:, :2]*np.sqrt(rsky_)[:, None], np.linalg.norm(r, axis=1)/rsky_
 
-def simulate(x, vc, sv, truth, rng, vtmax=BASE["vtmax"], dvsky=BASE["dvsky"], ecc="thermal"):
-    vt_vec, ratio = kepler_geometry(len(x), rng, ecc)
+def simulate(x, vc, sv, truth, rng, vtmax=BASE["vtmax"], dvsky=BASE["dvsky"], ecc="thermal", rsky=None):
+    """Une réalisation (compatibilité : utilisée par les scripts de validation)."""
+    vt_vec, ratio = kepler_geometry(len(x), rng, ecc, rsky)
     if truth == "mond": vt_vec = vt_vec*mond_boost3d(x*ratio)[:, None]
     v = observe(vt_vec*vc[:, None], sv, rng)
     va = np.linalg.norm(v, axis=1); vt = va/vc
     keep = (vt < vtmax) & (va < dvsky)
     return x[keep], vt[keep]
 
-def calibrate(x, vc, sv, n_mocks=5000, seed=0, stat_kw=None, **kw):
-    rng = np.random.default_rng(seed); stat_kw = stat_kw or {}
-    out = {t: np.array([step_stat(*simulate(x, vc, sv, t, rng, **kw), **stat_kw) for _ in range(n_mocks)])
-           for t in ("newton", "mond")}
+def simulate_batch(x, vc, sv, truth, rng, nb, vtmax=BASE["vtmax"], dvsky=BASE["dvsky"], ecc="thermal", rsky=None, stat_kw=None):
+    """nb réalisations vectorisées ; renvoie les nb valeurs de S."""
+    stat_kw = stat_kw or {}; N = len(x)
+    X = np.tile(x, nb); VC = np.tile(vc, nb); SV = np.tile(np.asarray(sv), (nb, 1)) if np.ndim(sv) == 2 else np.tile(sv, nb)
+    RS = None if rsky is None else np.tile(rsky, nb)
+    vt_vec, ratio = kepler_geometry(N*nb, rng, ecc, RS)
+    if truth == "mond": vt_vec = vt_vec*mond_boost3d(X*ratio)[:, None]
+    v = observe(vt_vec*VC[:, None], SV, rng)
+    va = np.linalg.norm(v, axis=1); vt = va/VC
+    keep = (vt < vtmax) & (va < dvsky)
+    out = np.empty(nb)
+    for k in range(nb):
+        s = slice(k*N, (k + 1)*N); kk = keep[s]
+        out[k] = step_stat(X[s][kk], vt[s][kk], **stat_kw)
+    return out
+
+def calibrate(x, vc, sv, n_mocks=50000, seed=0, stat_kw=None, rsky=None, ecc="thermal", ecc_scenarios=None,
+              vtmax=BASE["vtmax"], dvsky=BASE["dvsky"], batch=50):
+    """Colonnes : newton, mond (excentricité de référence), puis newton_<scénario>, mond_<scénario>."""
+    rng = np.random.default_rng(seed); out = {}
+    runs = [("", ecc)] + [("_" + k, tuple(v)) for k, v in (ecc_scenarios or {}).items()]
+    for suffix, e in runs:
+        for truth in ("newton", "mond"):
+            vals = []
+            for i in range(0, n_mocks, batch):
+                vals.append(simulate_batch(x, vc, sv, truth, rng, min(batch, n_mocks - i), vtmax, dvsky, e, rsky, stat_kw))
+            out[truth + suffix] = np.concatenate(vals)
     return pd.DataFrame(out)
 
-def calibrate_envelope(geo, n_per_f=1000, seed=0, stat_kw=None, cfg=None, vtmax=BASE["vtmax"], dvsky=BASE["dvsky"], scenarios=None):
-    """Hypothèse nulle newtonienne contaminée. scenarios : liste (forme, f_in) ; par défaut cfg['f_in'] (mode fixe, v0.5)."""
+def calibrate_envelope(geo, n_per_f=20000, seed=0, stat_kw=None, cfg=None, vtmax=BASE["vtmax"], dvsky=BASE["dvsky"], scenarios=None):
+    """Hypothèse nulle newtonienne contaminée (excentricité thermique, le cas le plus défavorable à Newton).
+    scenarios : liste (forme, f_in) ; par défaut cfg['f_in'] (mode fixe, v0.5)."""
     import contamination as ct
     rng = np.random.default_rng(seed + 1); stat_kw = stat_kw or {}; rows = []
     scenarios = scenarios or [(cfg.get("shape", "raghavan2010"), f) for f in cfg["f_in"]]
@@ -55,37 +101,44 @@ def calibrate_envelope(geo, n_per_f=1000, seed=0, stat_kw=None, cfg=None, vtmax=
             rows.append((shape, f, step_stat(xx, vv, **stat_kw)))
     return pd.DataFrame(rows, columns=["shape", "f_in", "S"])
 
-def _p_upper(s, S_obs):
-    from scipy.stats import norm
-    s = s[np.isfinite(s)]
-    return (np.sum(s >= S_obs) + 1)/(len(s) + 1), float(norm.sf(S_obs, s.mean(), s.std()))
+def _tail(s, S_obs, side):
+    """Probabilité de queue : estimation ponctuelle k/N, borne haute Clopper-Pearson à 95 %, approximation gaussienne."""
+    s = np.asarray(s, float); s = s[np.isfinite(s)]; N = len(s)
+    k = int(np.sum(s >= S_obs)) if side == "upper" else int(np.sum(s <= S_obs))
+    cp = 1.0 if k >= N else float(_beta.ppf(0.95, k + 1, N - k))
+    g = float(_norm.sf(S_obs, s.mean(), s.std())) if side == "upper" else float(_norm.cdf(S_obs, s.mean(), s.std()))
+    return dict(k=k, N=N, p=k/N, p_cp95=cp, p_gauss=g, S_mean=float(s.mean()), S_sd=float(s.std()))
 
 def decide(S_obs, mocks, p_thr=0.00135, env=None):
-    from scipy.stats import norm
-    n, m = mocks.newton.dropna().values, mocks.mond.dropna().values
-    p_newton_pur, pg_newton_pur = _p_upper(n, S_obs)
-    p_mond = (np.sum(m <= S_obs) + 1)/(len(m) + 1); pg_mond = float(norm.cdf(S_obs, m.mean(), m.std()))
-    env_rows = []
+    """Chaque hypothèse est jugée dans le scénario qui lui est le plus favorable :
+    Newton : Newton pur thermique et chaque scénario de contamination (S le plus haut) ;
+    MOND : MOND pur dans chaque scénario d'excentricité (S le plus bas).
+    Rejet seulement si la borne haute Clopper-Pearson à 95 % ET l'approximation gaussienne sont sous le seuil."""
+    rows = [dict(hyp="newton", scenario="pur_thermique", **_tail(mocks["newton"].values, S_obs, "upper"))]
     if env is not None:
         keys = ["shape", "f_in"] if "shape" in env.columns else ["f_in"]
         for key, g in env.groupby(keys):
             key = key if isinstance(key, tuple) else (key,)
-            pe, pge = _p_upper(g.S.values, S_obs)
-            lab = {k: (v if isinstance(v, str) else float(v)) for k, v in zip(keys, key)}
-            env_rows.append(dict(**lab, S_mean=float(np.nanmean(g.S)), S_sd=float(np.nanstd(g.S)), p=pe, p_gauss=pge))
-    # nulle newtonienne : la plus difficile à rejeter parmi Newton pur et l'enveloppe contaminée
-    p_newton = max([p_newton_pur] + [r["p"] for r in env_rows])
-    pg_newton = max([pg_newton_pur] + [r["p_gauss"] for r in env_rows])
-    newton_rej = p_newton < p_thr and pg_newton < p_thr
-    mond_rej = p_mond < p_thr and pg_mond < p_thr
-    if mond_rej and not newton_rej: verdict = "MOND rejeté (Newton favorisé)"
-    elif newton_rej and not mond_rej: verdict = "Newton rejeté pour toute contamination de l'enveloppe (MOND favorisé)"
+            lab = "_".join(str(k if isinstance(k, str) else round(float(k), 3)) for k in key)
+            rows.append(dict(hyp="newton", scenario="contamination_" + lab, **_tail(g.S.values, S_obs, "upper")))
+    for c in mocks.columns:
+        if c.startswith("mond"):
+            rows.append(dict(hyp="mond", scenario="thermique" if c == "mond" else c[5:], **_tail(mocks[c].values, S_obs, "lower")))
+        elif c.startswith("newton_"):
+            rows.append(dict(hyp="newton_info", scenario=c[7:], **_tail(mocks[c].values, S_obs, "upper")))
+    T = pd.DataFrame(rows)
+    nn, mm = T[T.hyp == "newton"], T[T.hyp == "mond"]
+    pN_cp, pN_g, pM_cp, pM_g = nn.p_cp95.max(), nn.p_gauss.max(), mm.p_cp95.max(), mm.p_gauss.max()
+    newton_rej = pN_cp < p_thr and pN_g < p_thr
+    mond_rej = pM_cp < p_thr and pM_g < p_thr
+    if mond_rej and not newton_rej: verdict = "MOND rejeté dans tous ses scénarios (Newton favorisé)"
+    elif newton_rej and not mond_rej: verdict = "Newton rejeté dans tous ses scénarios (MOND favorisé)"
     elif newton_rej and mond_rej: verdict = "Les deux rejetés (ni Newton ni MOND : systématique ou autre physique)"
     else: verdict = "Non concluant"
-    sep = (m.mean() - n.mean())/np.sqrt(0.5*(n.var() + m.var()))
-    S_env_max = max([float(n.mean())] + [r["S_mean"] for r in env_rows])
-    sep_env = (m.mean() - S_env_max)/np.sqrt(0.5*(n.var() + m.var()))
-    return dict(S_obs=S_obs, p_newton=p_newton, p_newton_gauss=pg_newton, p_newton_pur=p_newton_pur,
-                p_mond=p_mond, p_mond_gauss=pg_mond, S_newton_mean=n.mean(), S_newton_env_max=S_env_max,
-                S_mond_mean=m.mean(), sigma_S=n.std(), separation_sigma=sep, separation_sigma_env=sep_env,
-                envelope=env_rows, verdict=verdict)
+    n0, m0 = T[(T.hyp == "newton") & (T.scenario == "pur_thermique")].iloc[0], T[(T.hyp == "mond") & (T.scenario == "thermique")].iloc[0]
+    S_N_max, S_M_min = nn.S_mean.max(), mm.S_mean.min()
+    sd = 0.5*(n0.S_sd + m0.S_sd)
+    return dict(S_obs=S_obs, p_newton_cp95=pN_cp, p_newton_gauss=pN_g, p_newton_pur=n0.p, p_mond_cp95=pM_cp, p_mond_gauss=pM_g,
+                p_mond_thermique=m0.p, S_newton_mean=n0.S_mean, S_newton_max=S_N_max, S_mond_mean=m0.S_mean, S_mond_min=S_M_min,
+                sigma_S=n0.S_sd, separation_sigma=(m0.S_mean - n0.S_mean)/sd, separation_sigma_pire=(S_M_min - S_N_max)/sd,
+                scenarios=T.to_dict("records"), verdict=verdict)

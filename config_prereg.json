@@ -70,7 +70,7 @@
     "x_high": 1.0
   },
   "calibration": {
-    "n_mocks": 5000,
+    "n_mocks": 50000,
     "seed": 20261202,
     "eccentricity": "thermal",
     "contamination": {
@@ -83,7 +83,7 @@
         0.4,
         0.5
       ],
-      "n_mocks_per_f": 1000,
+      "n_mocks_per_f": 20000,
       "screen": "epoques+image_pess",
       "period_lognormal": [
         5.03,
@@ -115,13 +115,26 @@
         "dr3": "dr3_ruwe+image_pess",
         "dr4": "epoques+image_pess"
       }
-    }
+    },
+    "ecc_scenarios": {
+      "a1.0-1.3": [
+        1.0,
+        1.3
+      ],
+      "a1.0-1.6": [
+        1.0,
+        1.6
+      ]
+    },
+    "_comment_v07b": "Excentricités p(e) ∝ e^α, α croissant linéairement en log séparation de 1 à 30 kau (Hwang, Ting & Zakamska 2022). Newton est jugé en excentricité thermique avec contamination (S le plus haut), MOND dans son scénario le plus bas."
   },
   "decision": {
     "p_threshold": 0.00135,
     "n_min_powered": 1000,
     "n_target": 2000,
-    "null_newton": "enveloppe_max"
+    "null_newton": "enveloppe_max",
+    "p_rule": "borne haute Clopper-Pearson 95 % ET approximation gaussienne < p_threshold",
+    "n_min_per_zone": 100
   },
   "multiverse": {
     "degroup": [

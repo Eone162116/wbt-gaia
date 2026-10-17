@@ -88,12 +88,16 @@ if STAGE in ("blind", "all"):
     log(f"[AVEUGLE] S permuté = {cal.step_stat(x, vt_blind, ST['x_low'], ST['x_high']):+.3f} (attendu ≈ 0)")
     pd.DataFrame(dict(sid1=S.sid1, sid2=S.sid2, x=x, M=S.M.values, vc=vc, sv=(S.svt*S.vc).values)).to_csv(f"sample_{REL}.csv", index=False)
     C = CFG["calibration"]; t = time.time()
-    mocks = cal.calibrate(x, vc, sv, n_mocks=C["n_mocks"], seed=C["seed"], ecc=C["eccentricity"],
-                          stat_kw=dict(x_low=ST["x_low"], x_high=ST["x_high"]), vtmax=P["vtmax"], dvsky=P["dvsky"])
+    quick = os.environ.get("WBT_QUICK") == "1"          # v0.7-B : mode rapide, répétitions seulement
+    if quick and REL == "dr4": raise SystemExit("WBT_QUICK interdit sur DR4 : la calibration complète est obligatoire.")
+    if quick: log("MODE RAPIDE (WBT_QUICK=1) : simulations divisées par 10, répétition seulement")
+    nm = C["n_mocks"]//10 if quick else C["n_mocks"]
+    log(f"effectifs par zone : x < {ST['x_low']} : {int((x < ST['x_low']).sum())} ; x > {ST['x_high']} : {int((x > ST['x_high']).sum())}")
+    mocks = cal.calibrate(x, vc, sv, n_mocks=nm, seed=C["seed"], ecc=C["eccentricity"], ecc_scenarios=C.get("ecc_scenarios"),
+                          rsky=S.rsky.values, stat_kw=dict(x_low=ST["x_low"], x_high=ST["x_high"]), vtmax=P["vtmax"], dvsky=P["dvsky"])
     mocks.to_csv(f"mocks_{REL}.csv", index=False)
-    sep = (mocks.mond.mean()-mocks.newton.mean())/mocks.newton.std()
-    log(f"calibration : {C['n_mocks']} simulations ({time.time()-t:.0f} s) ; S Newton {mocks.newton.mean():+.3f} ± {mocks.newton.std():.3f}"
-        f" ; S MOND {mocks.mond.mean():+.3f} ± {mocks.mond.std():.3f} ; séparation attendue {sep:.1f} σ")
+    log(f"calibration : {nm} simulations par colonne ({time.time()-t:.0f} s) ; "
+        + ", ".join(f"{c} {mocks[c].mean():+.3f} ± {mocks[c].std():.3f}" for c in mocks.columns))
     from wbt_pipeline import MG_SUN
     _mass = lambda MG: (lambda mm: np.where(mm < 0.7, mm + 0.05, mm))(10**(0.0725*(MG_SUN - MG)))
     dmod = 5*np.log10(S.d.values/10)
@@ -121,13 +125,13 @@ if STAGE in ("blind", "all"):
                       for sh, fs in band.items()]).to_csv(f"finfer_{REL}.csv", index=False)
         log(f"f_in mesuré (drapeau {grid}, sans vitesses) : taux signalé {r:.3f} ± {sr:.3f} sur {len(flags)} paires candidates ; "
             + " ; ".join(f"{sh} {fs[0]:.2f}–{fs[2]:.2f}" for sh, fs in band.items()))
-    env = cal.calibrate_envelope(geo, n_per_f=CC["n_mocks_per_f"], seed=C["seed"], stat_kw=dict(x_low=ST["x_low"], x_high=ST["x_high"]),
+    env = cal.calibrate_envelope(geo, n_per_f=(CC["n_mocks_per_f"]//10 if quick else CC["n_mocks_per_f"]), seed=C["seed"], stat_kw=dict(x_low=ST["x_low"], x_high=ST["x_high"]),
                                  cfg=CC, vtmax=P["vtmax"], dvsky=P["dvsky"], scenarios=scenarios)
     env.to_csv(f"envelope_{REL}.csv", index=False)
     g = env.groupby(["shape", "f_in"]).S
     log(f"enveloppe de contamination ({CC['screen']}, {time.time()-t2:.0f} s) : S newtonien moyen : "
         + ", ".join(f"{sh[:8]} {f:.2f} → {v:+.3f}" for (sh, f), v in g.mean().items())
-        + f" ; séparation MOND vs pire Newton : {(mocks.mond.mean() - g.mean().max())/mocks.newton.std():.1f} σ")
+        + f" ; séparation pire MOND vs pire Newton : {(min(mocks[c].mean() for c in mocks.columns if c.startswith('mond')) - max(g.mean().max(), mocks.newton.mean()))/mocks.newton.std():.1f} σ")
 
 def frozen_arrays():
     s = pd.read_csv(f"sample_{REL}.csv")
@@ -148,6 +152,8 @@ if STAGE == "unblind":
     res.update(N=int(m.sum()), binned_log10_newton_over_mond=float(np.log10(s["pref_newton"])), unblinded_utc=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                freeze_manifest=man["manifest_sha256"])
     if res["N"] < CFG["decision"]["n_min_powered"]: res["verdict"] += " — étude déclarée sous-dimensionnée"
+    nlo, nhi = int((x < ST["x_low"]).sum()), int((x > ST["x_high"]).sum()); res.update(n_bas=nlo, n_haut=nhi)
+    if min(nlo, nhi) < CFG["decision"].get("n_min_per_zone", 0): res["verdict"] += " — zone de x sous-dimensionnée"
     json.dump(res, open(f"RESULT_{REL}.json", "w", encoding="utf-8"), indent=2, default=float)
     log("[LEVÉE]", json.dumps(res, indent=1, default=float, ensure_ascii=False))
 

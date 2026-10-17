@@ -89,6 +89,13 @@ Essais écartés : une marche fondée sur le quartile inférieur de ṽ au lieu 
 ## Changements v0.7 (audit externe du 17/10/2026)
 
 - **v0.7-A** : équation MOND conforme à Cookson et al. 2026 (éq. 7). Le terme de champ externe est [tanh(0,825 g_N,e/g_N,i)]^3,7, et non tanh((·)^3,7). L'écart sur le boost allait jusqu'à 1,5 % vers x ≈ 1. Test de conformité : `python tests/test_mond_eq7.py`. Les scripts archivés de `exploration_dr3/` gardent l'ancienne forme, comme trace de l'exploration.
+- **v0.7-B** : recalibration.
+    - **Volume** : 50 000 simulations par hypothèse pure et 20 000 par scénario de contamination, vectorisées par lots.
+    - **Règle de rejet** : la borne haute de Clopper-Pearson à 95 % de la probabilité de queue et l'approximation gaussienne doivent toutes deux passer sous 0,00135. Une seule simulation extrême ne peut plus renverser un verdict.
+    - **Excentricités** : deux scénarios où l'excentricité augmente avec la séparation, α de 1,0 à 1,3 et de 1,0 à 1,6 entre 1 et 30 kau (Hwang, Ting & Zakamska 2022). Chaque hypothèse est jugée dans le scénario qui lui est le plus favorable : Newton thermique et contaminé (S le plus haut), MOND superthermique (S le plus bas).
+    - **Effectifs** : au moins 100 paires exigées dans chaque zone de x.
+    - **Seuil σ(ṽ)** : choisi par simulation seulement (`validation_calibration/sigma_threshold_study.py`). Sur DR3, le relâcher de 0,1 à 0,3 n'ajoute que 9 paires, et 0,1 est conservé.
+    - **Durée** : l'étape `blind` prend environ 50 minutes. `WBT_QUICK=1` divise les simulations par 10 pour les répétitions, et ce mode est interdit sur DR4.
 - **v0.7-C** : sélection. σ(ṽ) vient désormais de la covariance complète de Δμ, avec `pmra_pmdec_corr` et une moyenne en direction, sans le terme proportionnel à la vitesse observée : la coupe σ(ṽ) < 0,1 ne dépend plus des vitesses. Les simulations tirent leur bruit dans cette covariance, avec en plus l'erreur d'échelle due à la distance. Les candidats du crible par époques sont choisis sans aucune coupe en vitesse. Chaque paire a l'un de trois états (propre, signalé, manquant), et f_in est mesuré sur les seules paires évaluées.
 
 ## Changements v0.3
