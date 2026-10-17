@@ -126,7 +126,17 @@
         1.6
       ]
     },
-    "_comment_v07b": "Excentricités p(e) ∝ e^α, α croissant linéairement en log séparation de 1 à 30 kau (Hwang, Ting & Zakamska 2022). Newton est jugé en excentricité thermique avec contamination (S le plus haut), MOND dans son scénario le plus bas."
+    "_comment_v07b": "Excentricités p(e) ∝ e^α, α croissant linéairement en log séparation de 1 à 30 kau (Hwang, Ting & Zakamska 2022). Newton est jugé en excentricité thermique avec contamination (S le plus haut), MOND dans son scénario le plus bas.",
+    "ecc_mode": "mesure",
+    "ecc_fit": {
+      "R": 100,
+      "x_zones": [
+        0.3,
+        1.0
+      ],
+      "bande": "±2σ (Δ ln L = 2), grille α de 0 à 3 par pas de 0,25"
+    },
+    "_comment_v08": "Excentricité mesurée par les angles v–r sur l'échantillon (eccfit.py), à l'étape aveugle. Scénarios : central, le plus favorable à Newton (S maximal) et le plus favorable à MOND (S minimal). Les scénarios fixes ecc_scenarios ne servent qu'en mode 'fixe'."
   },
   "decision": {
     "p_threshold": 0.00135,

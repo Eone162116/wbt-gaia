@@ -133,6 +133,9 @@ def kinematics(df, P):
     n = er1+er2; n /= np.linalg.norm(n, axis=1)[:, None]
     dV = V2-V1
     v_sph = np.linalg.norm(dV-(dV*n).sum(1)[:, None]*n, axis=1)
+    # v0.8 : angle v–r (direction seule), replié sur [0°, 90°]
+    dX = er2 - er1; xs = dX - (dX*n).sum(1)[:, None]*n; vp = dV - (dV*n).sum(1)[:, None]*n
+    psi = np.degrees(np.arccos(np.clip(np.abs((xs*vp).sum(1))/np.maximum(np.linalg.norm(xs, axis=1)*np.linalg.norm(vp, axis=1), 1e-30), 0, 1)))
     # incertitude sur v (mouvements propres + distance commune)
     # v0.7-C : covariance de Δμ (deux étoiles, corrélation pmra/pmdec incluse) en (km/s)², et σ_v indépendant des vitesses
     rc1, rc2 = (np.nan_to_num(c) for c in g("pmra_pmdec_corr"))
@@ -151,7 +154,7 @@ def kinematics(df, P):
         c1=c1, c2=c2, MG1=MG1, MG2=MG2,
         nc10=np.maximum(P.nc10_i.values, P.nc10_j.values), nc40=np.maximum(P.nc40_i.values, P.nc40_j.values),
         sid1=df.source_id.values[P.i.values], sid2=df.source_id.values[P.j.values],
-        scr4=np.logical_and(*g("scr4_star")), flags_ok=np.ones(len(P), bool)))
+        scr4=np.logical_and(*g("scr4_star")), flags_ok=np.ones(len(P), bool), psi=psi))
 
 def observe(v_true, sv, rng):
     """Bruit d'observation simulé sur la vitesse relative projetée (km/s), v0.7-C.

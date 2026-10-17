@@ -8,3 +8,4 @@ __pycache__/
 *.xml
 !validation_contamination/*.csv
 !validation_calibration/*.csv
+!validation_eccentricity/*.csv

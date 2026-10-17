@@ -19,6 +19,7 @@ def frozen_files():
     mes = CFG["calibration"]["contamination"].get("f_in_mode") == "mesure"
     return (CODE + [f"mocks_{REL}.csv", f"envelope_{REL}.csv"] + ([f"finfer_{REL}.csv"] if mes else [])
             + [f"K_{REL}.pkl", f"sample_{REL}.csv", f"CONTROLS_{REL}_aveugle.json"]      # v0.7-D : données analysées et contrôles
+            + ([f"eccfit_{REL}.csv", "eccfit.py"] if CFG["calibration"].get("ecc_mode") == "mesure" else [])   # v0.8
             + ([f"epoch_stats_{REL}.csv"] if REL == "dr4" else []))
 pattern = f"{REL}_*.csv" if glob.glob(f"{REL}_*.csv") else "s40_*.csv"      # s40_* = tranches DR3 de développement
 
@@ -97,7 +98,20 @@ if STAGE in ("blind", "all"):
     if quick: log("MODE RAPIDE (WBT_QUICK=1) : simulations divisées par 10, répétition seulement")
     nm = C["n_mocks"]//10 if quick else C["n_mocks"]
     log(f"effectifs par zone : x < {ST['x_low']} : {int((x < ST['x_low']).sum())} ; x > {ST['x_high']} : {int((x > ST['x_high']).sum())}")
-    mocks = cal.calibrate(x, vc, sv, n_mocks=nm, seed=C["seed"], ecc=C["eccentricity"], ecc_scenarios=C.get("ecc_scenarios"),
+    ecc_sc, ecc_env = C.get("ecc_scenarios"), "thermal"
+    if C.get("ecc_mode") == "mesure":                 # v0.8 : excentricité mesurée par les angles v–r, à l'aveugle
+        import eccfit as ef
+        if "psi" not in S.columns: raise SystemExit("K ne contient pas l'angle ψ : relance d'abord « build » (v0.8).")
+        rng_e = np.random.default_rng(C["seed"] + 7); Re = C["ecc_fit"]["R"]//(2 if quick else 1)
+        bN = ef.measure(S.psi.values, x, vc, sv, rng_e, "newton", Re, P["vtmax"], P["dvsky"])
+        bM = ef.measure(S.psi.values, x, vc, sv, rng_e, "mond", Re, P["vtmax"], P["dvsky"])
+        ecc_sc = ef.scenarios(bN, bM); ecc_env = ecc_sc["mes_pire_newton"]
+        pd.DataFrame([dict(gabarits=h, zone=z, alpha_min=b[z][0], alpha=b[z][1], alpha_max=b[z][2], n=b["n_" + z])
+                      for h, b in (("newton", bN), ("mond", bM)) for z in ("bas", "haut")]).to_csv(f"eccfit_{REL}.csv", index=False)
+        log(f"excentricité mesurée (angles v–r, sans |ṽ|) : α(x < {ST['x_low']}) = {bN['bas'][1]:.2f} [{bN['bas'][0]:.2f} ; {bN['bas'][2]:.2f}] ; "
+            f"α(x > {ST['x_high']}) = {bN['haut'][1]:.2f} [{bN['haut'][0]:.2f} ; {bN['haut'][2]:.2f}] ; scénarios : "
+            + ", ".join(f"{k} {tuple(round(a, 2) for a in v['x'])}" for k, v in ecc_sc.items()))
+    mocks = cal.calibrate(x, vc, sv, n_mocks=nm, seed=C["seed"], ecc=C["eccentricity"], ecc_scenarios=ecc_sc,
                           rsky=S.rsky.values, stat_kw=dict(x_low=ST["x_low"], x_high=ST["x_high"]), vtmax=P["vtmax"], dvsky=P["dvsky"])
     mocks.to_csv(f"mocks_{REL}.csv", index=False)
     log(f"calibration : {nm} simulations par colonne ({time.time()-t:.0f} s) ; "
@@ -130,7 +144,7 @@ if STAGE in ("blind", "all"):
         log(f"f_in mesuré (drapeau {grid}, sans vitesses) : taux signalé {r:.3f} ± {sr:.3f} sur {len(flags)} paires candidates ; "
             + " ; ".join(f"{sh} {fs[0]:.2f}–{fs[2]:.2f}" for sh, fs in band.items()))
     env = cal.calibrate_envelope(geo, n_per_f=(CC["n_mocks_per_f"]//10 if quick else CC["n_mocks_per_f"]), seed=C["seed"], stat_kw=dict(x_low=ST["x_low"], x_high=ST["x_high"]),
-                                 cfg=CC, vtmax=P["vtmax"], dvsky=P["dvsky"], scenarios=scenarios)
+                                 cfg=CC, vtmax=P["vtmax"], dvsky=P["dvsky"], scenarios=scenarios, ecc=ecc_env)
     env.to_csv(f"envelope_{REL}.csv", index=False)
     g = env.groupby(["shape", "f_in"]).S
     log(f"enveloppe de contamination ({CC['screen']}, {time.time()-t2:.0f} s) : S newtonien moyen : "

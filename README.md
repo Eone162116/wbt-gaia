@@ -89,6 +89,10 @@ Essais écartés : une marche fondée sur le quartile inférieur de ṽ au lieu 
 ## Changements v0.7 (audit externe du 17/10/2026)
 
 - **v0.7-A** : équation MOND conforme à Cookson et al. 2026 (éq. 7). Le terme de champ externe est [tanh(0,825 g_N,e/g_N,i)]^3,7, et non tanh((·)^3,7). L'écart sur le boost allait jusqu'à 1,5 % vers x ≈ 1. Test de conformité : `python tests/test_mond_eq7.py`. Les scripts archivés de `exploration_dr3/` gardent l'ancienne forme, comme trace de l'exploration.
+- **v0.8** : excentricité mesurée.
+    - **Mesure** : à l'étape aveugle, l'indice d'excentricité α est mesuré dans chaque zone de x par les angles entre séparation et vitesse relative (`eccfit.py`). Ces angles ne dépendent pas de |ṽ| dans le modèle opérationnel.
+    - **Scénarios** : trois scénarios issus de la mesure (central, le plus favorable à Newton, le plus favorable à MOND) entrent dans les deux hypothèses nulles. L'enveloppe de contamination utilise le scénario le plus favorable à Newton.
+    - **Motivation** : sur DR3, α ≈ 1,5 à x < 0,3 et α ≈ 0,5 à x > 1. Sous Newton, ce gradient imite une marche MOND d'environ +0,085.
 - **v0.7-D** : verrouillage et contrôles.
     - **Gel** : il couvre aussi les données analysées (`K_<rel>.pkl`, `sample_<rel>.csv`), les contrôles avant levée et, sur DR4, les statistiques du crible par époques.
     - **Arrêt bloquant** : sur DR4, l'analyse s'arrête si le crible par époques exigé est absent.

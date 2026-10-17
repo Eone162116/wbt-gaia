@@ -24,9 +24,17 @@ def alpha_profile(rsky, a_lo, a_hi, s_lo=1e3, s_hi=3e4):
     t = np.clip((np.log10(rsky) - np.log10(s_lo))/(np.log10(s_hi) - np.log10(s_lo)), 0, 1)
     return a_lo + (a_hi - a_lo)*t
 
-def sample_ecc(n, rng, ecc="thermal", rsky=None):
-    """'thermal' (α = 1), 'uniform' (α = 0), nombre α, ou (α_bas, α_haut) avec rsky : p(e) ∝ e^α."""
-    if isinstance(ecc, str):
+def alpha_from_x(x, a_lo, a_hi, x_lo=0.3, x_hi=1.0):
+    """v0.8 : α = α_bas pour x ≤ 0,3, α_haut pour x ≥ 1, interpolé en log x entre les deux."""
+    t = np.clip((np.log10(x) - np.log10(x_lo))/(np.log10(x_hi) - np.log10(x_lo)), 0, 1)
+    return a_lo + (a_hi - a_lo)*t
+
+def sample_ecc(n, rng, ecc="thermal", rsky=None, x=None):
+    """'thermal' (α = 1), 'uniform' (α = 0), nombre α, (α_bas, α_haut) en séparation avec rsky,
+    ou {"x": (α_bas, α_haut)} en r/rM avec x (v0.8, excentricité mesurée par les angles v–r) : p(e) ∝ e^α."""
+    if isinstance(ecc, dict):
+        a = alpha_from_x(x, *ecc["x"])
+    elif isinstance(ecc, str):
         a = {"thermal": 1.0, "uniform": 0.0}[ecc]
     elif np.ndim(ecc) == 0:
         a = float(ecc)
@@ -34,8 +42,8 @@ def sample_ecc(n, rng, ecc="thermal", rsky=None):
         a = alpha_profile(rsky, ecc[0], ecc[1])
     return np.minimum(rng.random(n)**(1.0/(np.asarray(a) + 1.0)), 0.999)
 
-def kepler_geometry(n, rng, ecc="thermal", rsky=None):
-    e = sample_ecc(n, rng, ecc, rsky)
+def kepler_geometry(n, rng, ecc="thermal", rsky=None, x=None):
+    e = sample_ecc(n, rng, ecc, rsky, x)
     Mn = 2*np.pi*rng.random(n); E = Mn.copy()
     for _ in range(40): E = E - (E - e*np.sin(E) - Mn)/(1 - e*np.cos(E))
     r = np.stack([np.cos(E)-e, np.sqrt(1-e**2)*np.sin(E), np.zeros(n)], 1)
@@ -52,7 +60,7 @@ def kepler_geometry(n, rng, ecc="thermal", rsky=None):
 
 def simulate(x, vc, sv, truth, rng, vtmax=BASE["vtmax"], dvsky=BASE["dvsky"], ecc="thermal", rsky=None):
     """Une réalisation (compatibilité : utilisée par les scripts de validation)."""
-    vt_vec, ratio = kepler_geometry(len(x), rng, ecc, rsky)
+    vt_vec, ratio = kepler_geometry(len(x), rng, ecc, rsky, x)
     if truth == "mond": vt_vec = vt_vec*mond_boost3d(x*ratio)[:, None]
     v = observe(vt_vec*vc[:, None], sv, rng)
     va = np.linalg.norm(v, axis=1); vt = va/vc
@@ -64,7 +72,7 @@ def simulate_batch(x, vc, sv, truth, rng, nb, vtmax=BASE["vtmax"], dvsky=BASE["d
     stat_kw = stat_kw or {}; N = len(x)
     X = np.tile(x, nb); VC = np.tile(vc, nb); SV = np.tile(np.asarray(sv), (nb, 1)) if np.ndim(sv) == 2 else np.tile(sv, nb)
     RS = None if rsky is None else np.tile(rsky, nb)
-    vt_vec, ratio = kepler_geometry(N*nb, rng, ecc, RS)
+    vt_vec, ratio = kepler_geometry(N*nb, rng, ecc, RS, X)
     if truth == "mond": vt_vec = vt_vec*mond_boost3d(X*ratio)[:, None]
     v = observe(vt_vec*VC[:, None], SV, rng)
     va = np.linalg.norm(v, axis=1); vt = va/VC
@@ -79,7 +87,7 @@ def calibrate(x, vc, sv, n_mocks=50000, seed=0, stat_kw=None, rsky=None, ecc="th
               vtmax=BASE["vtmax"], dvsky=BASE["dvsky"], batch=50):
     """Colonnes : newton, mond (excentricité de référence), puis newton_<scénario>, mond_<scénario>."""
     rng = np.random.default_rng(seed); out = {}
-    runs = [("", ecc)] + [("_" + k, tuple(v)) for k, v in (ecc_scenarios or {}).items()]
+    runs = [("", ecc)] + [("_" + k, v if isinstance(v, dict) else tuple(v)) for k, v in (ecc_scenarios or {}).items()]
     for suffix, e in runs:
         for truth in ("newton", "mond"):
             vals = []
@@ -88,16 +96,17 @@ def calibrate(x, vc, sv, n_mocks=50000, seed=0, stat_kw=None, rsky=None, ecc="th
             out[truth + suffix] = np.concatenate(vals)
     return pd.DataFrame(out)
 
-def calibrate_envelope(geo, n_per_f=20000, seed=0, stat_kw=None, cfg=None, vtmax=BASE["vtmax"], dvsky=BASE["dvsky"], scenarios=None):
+def calibrate_envelope(geo, n_per_f=20000, seed=0, stat_kw=None, cfg=None, vtmax=BASE["vtmax"], dvsky=BASE["dvsky"], scenarios=None, ecc="thermal"):
     """Hypothèse nulle newtonienne contaminée (excentricité thermique, le cas le plus défavorable à Newton).
     scenarios : liste (forme, f_in) ; par défaut cfg['f_in'] (mode fixe, v0.5)."""
     import contamination as ct
     rng = np.random.default_rng(seed + 1); stat_kw = stat_kw or {}; rows = []
     scenarios = scenarios or [(cfg.get("shape", "raghavan2010"), f) for f in cfg["f_in"]]
+    kg = lambda n, r: kepler_geometry(n, r, ecc, geo.get("rsky"), geo["x"])     # v0.8 : excentricité la plus défavorable à Newton
     for shape, f in scenarios:
         c = dict(cfg, shape=shape)
         for _ in range(n_per_f):
-            xx, vv = ct.contaminated_newton(geo, f, rng, c, vtmax, dvsky, kepler_geometry)
+            xx, vv = ct.contaminated_newton(geo, f, rng, c, vtmax, dvsky, kg)
             rows.append((shape, f, step_stat(xx, vv, **stat_kw)))
     return pd.DataFrame(rows, columns=["shape", "f_in", "S"])
 
@@ -124,6 +133,8 @@ def decide(S_obs, mocks, p_thr=0.00135, env=None):
     for c in mocks.columns:
         if c.startswith("mond"):
             rows.append(dict(hyp="mond", scenario="thermique" if c == "mond" else c[5:], **_tail(mocks[c].values, S_obs, "lower")))
+        elif c.startswith("newton_mes"):           # v0.8 : excentricité mesurée, partie de l'hypothèse nulle
+            rows.append(dict(hyp="newton", scenario=c[7:], **_tail(mocks[c].values, S_obs, "upper")))
         elif c.startswith("newton_"):
             rows.append(dict(hyp="newton_info", scenario=c[7:], **_tail(mocks[c].values, S_obs, "upper")))
     T = pd.DataFrame(rows)

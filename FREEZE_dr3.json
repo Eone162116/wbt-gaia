@@ -1,26 +1,28 @@
 {
-  "frozen_at_utc": "2026-10-17T13:24:42Z",
+  "frozen_at_utc": "2026-10-17T21:36:25Z",
   "files": {
-    "wbt_pipeline.py": "02d31f513123f64399576cb0a2af82fd3b564c9ecf33798b425bc28d457742f4",
-    "calibrate.py": "93c6d10c85bbcabf8583dc472ec771fb5dec01af14be7f8050f17460ea913cc4",
+    "wbt_pipeline.py": "8f6523ad90363323dbec8dbcbcbc1323e688c1f7782a5336b10757dbfffe153e",
+    "calibrate.py": "efef628a12ce7fc50b9e5e635c09aa395b6ac51dbc0e27f81add4b8b784edb47",
     "blind.py": "b7a2bb2d2b1005d3f3f6893c85e80a4706d19950d764235a340c6685e130fe99",
-    "run_wbt.py": "fa2c475e9a12520f47f4bd0d3d37cded3a4dca53d4ccb30e6b44c9a0db7be0c4",
+    "run_wbt.py": "fe74661dac0308ae7ca4017bfb2573ea9a299d64f0417f461efef1b0810b46f6",
     "fetch_gaia.py": "0e794bc337d921e17a29ff807c616577cbf014365a8c6d53fa9fe108944636ab",
     "epoch_accel.py": "a6ed8cca4f5bfb0fb7f39d9993217f8f1a37fc5eb295c8326feef379706c7fff",
     "contamination.py": "c49fab7cee8ef228846aa2d9bd3510867f8441435fd50a28a00751af13d246be",
     "finfer.py": "54c0a3d6c9da2e164a24eadb79d8e698f4eec1883c27edbaa604e6503928086c",
     "validation_contamination/pgrid.npy": "8bb4ebefaf8b581b2f71adcf01ea6141b85380068bd78f25ee5c246262b5b6c0",
     "validation_contamination/pgrid_dr3.npy": "54dff79c0354bc4fbcea00b50818aeb01316527b70fb80f2721e3507989c255c",
-    "config_prereg.json": "597a4ad7b8810f720ca66f65db95dcebda86b3bf033a58820b52ca2f0b5a8e47",
-    "mocks_dr3.csv": "1573ffb0c6f3d8c4b5ee9c2a53a0eec75a310b4cdc76cc620979277716c804b0",
-    "envelope_dr3.csv": "ac8f3508b496c5a9265f48f787479953b365a153c2778212f6a759e96f7f1744",
+    "config_prereg.json": "fe130046686a7e8d03396d04e6db29815b9aca03dbffcb79a5bd3152b421efea",
+    "mocks_dr3.csv": "e4b803ae51b3fe8765264a808c536985f98d33d11219e56201bb54ed9ee62b4d",
+    "envelope_dr3.csv": "5ab77f03609cc2496433009d2e78aaf88e114f38d7f3541b9a23ea122e7dca2f",
     "finfer_dr3.csv": "36e80b11039b273236be48aee97eb29c008baee5038dff64713c594c07e033dc",
-    "K_dr3.pkl": "c202e7ed410bd617cbb30d6d1a61f4c5bc408fcac841e2d34d30ec51e645cce8",
+    "K_dr3.pkl": "55e69d77aa466a2c0e3423c337c50bf341c86dacdafdfa2d765cf52f8701b4aa",
     "sample_dr3.csv": "94139f818d574d0da89c7c4e2b5e1cc571fe534b506fa4297e379547dc979317",
-    "CONTROLS_dr3_aveugle.json": "28dd17f70c2d17a34ca7739a67c30b3c3613042c329fec8de268e6f8813ab325"
+    "CONTROLS_dr3_aveugle.json": "28dd17f70c2d17a34ca7739a67c30b3c3613042c329fec8de268e6f8813ab325",
+    "eccfit_dr3.csv": "e641f581733aa9255517992d3b1b0b7d809354e390fa3518235342182cfa9978",
+    "eccfit.py": "86c73bdb29dd0385c18c79e961d2d9313265cc6223eadcf5eedbd7fbb89ec3c1"
   },
   "arrays": {
     "sample_ids": "bf36fc0dc8109142d3f61c58b96458ad2099e2e2d8daf01f48ed1d0986651bbe"
   },
-  "manifest_sha256": "da7268d2a1d5c46535743b166ba147b64b2367878b9711861f5c158cf745bd92"
+  "manifest_sha256": "a5a26e2ca05ea6b52ea205189511ef6bf72fcc7efea1e2a6f747a388d1ad7a5e"
 }
