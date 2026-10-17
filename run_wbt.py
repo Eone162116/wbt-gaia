@@ -13,7 +13,8 @@ import calibrate as cal, blind as bl
 CFG = json.load(open("config_prereg.json", encoding="utf-8"))
 REL = sys.argv[1]; STAGE = sys.argv[2]
 P = CFG["primary"]; ST = CFG["statistic"]
-CODE = ["wbt_pipeline.py", "calibrate.py", "blind.py", "run_wbt.py", "fetch_gaia.py", "epoch_accel.py", "config_prereg.json"]
+CODE = ["wbt_pipeline.py", "calibrate.py", "blind.py", "run_wbt.py", "fetch_gaia.py", "epoch_accel.py", "contamination.py",
+        "validation_contamination/pgrid.npy", "config_prereg.json"]
 pattern = f"{REL}_*.csv" if glob.glob(f"{REL}_*.csv") else "s40_*.csv"      # s40_* = tranches DR3 de développement
 
 def log(*a):
@@ -84,22 +85,35 @@ if STAGE in ("blind", "all"):
     sep = (mocks.mond.mean()-mocks.newton.mean())/mocks.newton.std()
     log(f"calibration : {C['n_mocks']} simulations ({time.time()-t:.0f} s) ; S Newton {mocks.newton.mean():+.3f} ± {mocks.newton.std():.3f}"
         f" ; S MOND {mocks.mond.mean():+.3f} ± {mocks.mond.std():.3f} ; séparation attendue {sep:.1f} σ")
+    from wbt_pipeline import MG_SUN
+    _mass = lambda MG: (lambda mm: np.where(mm < 0.7, mm + 0.05, mm))(10**(0.0725*(MG_SUN - MG)))
+    dmod = 5*np.log10(S.d.values/10)
+    geo = dict(x=x, vc=vc, sv=sv, d=S.d.values, rsky=S.rsky.values, M=S.M.values, m1=_mass(S.MG1.values), m2=_mass(S.MG2.values),
+               G1=S.MG1.values + dmod, G2=S.MG2.values + dmod)
+    CC = C["contamination"]; t2 = time.time()
+    env = cal.calibrate_envelope(geo, n_per_f=CC["n_mocks_per_f"], seed=C["seed"], stat_kw=dict(x_low=ST["x_low"], x_high=ST["x_high"]),
+                                 cfg=CC, vtmax=P["vtmax"], dvsky=P["dvsky"])
+    env.to_csv(f"envelope_{REL}.csv", index=False)
+    g = env.groupby("f_in").S
+    log(f"enveloppe de contamination ({CC['screen']}, {time.time()-t2:.0f} s) : S newtonien moyen par f_in : "
+        + ", ".join(f"{f:.1f} → {v:+.3f}" for f, v in g.mean().items())
+        + f" ; séparation MOND vs pire Newton : {(mocks.mond.mean() - g.mean().max())/mocks.newton.std():.1f} σ")
 
 def frozen_arrays():
     s = pd.read_csv(f"sample_{REL}.csv")
     return dict(sample_ids=np.sort(np.concatenate([s.sid1.values, s.sid2.values]).astype(np.int64)))
 
 if STAGE == "freeze":
-    files = CODE + [f"mocks_{REL}.csv"]
+    files = CODE + [f"mocks_{REL}.csv", f"envelope_{REL}.csv"]
     man = bl.freeze(f"FREEZE_{REL}.json", files, frozen_arrays())
     log("gel enregistré :", man["frozen_at_utc"], "manifeste", man["manifest_sha256"][:16])
 
 if STAGE == "unblind":
-    man = bl.verify(f"FREEZE_{REL}.json", CODE + [f"mocks_{REL}.csv"], frozen_arrays())
+    man = bl.verify(f"FREEZE_{REL}.json", CODE + [f"mocks_{REL}.csv", f"envelope_{REL}.csv"], frozen_arrays())
     K = pd.read_pickle(f"K_{REL}.pkl"); m, vt, b = primary_selection(K)
     x = K.x.values[m]; v = vt[m]
     S_obs = cal.step_stat(x, v, ST["x_low"], ST["x_high"])
-    res = cal.decide(S_obs, pd.read_csv(f"mocks_{REL}.csv"), CFG["decision"]["p_threshold"])
+    res = cal.decide(S_obs, pd.read_csv(f"mocks_{REL}.csv"), CFG["decision"]["p_threshold"], env=pd.read_csv(f"envelope_{REL}.csv"))
     B, s = binned_test(x, v)
     res.update(N=int(m.sum()), binned_log10_newton_over_mond=float(np.log10(s["pref_newton"])), unblinded_utc=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                freeze_manifest=man["manifest_sha256"])
@@ -110,7 +124,7 @@ if STAGE == "unblind":
 if STAGE == "multiverse":
     if not (os.path.exists(f"RESULT_{REL}.json") and os.path.exists(f"FREEZE_{REL}.json")):
         raise SystemExit("multivers interdit avant la levée de l'aveuglement")
-    man = bl.verify(f"FREEZE_{REL}.json", CODE + [f"mocks_{REL}.csv"], frozen_arrays())
+    man = bl.verify(f"FREEZE_{REL}.json", CODE + [f"mocks_{REL}.csv", f"envelope_{REL}.csv"], frozen_arrays())
     if json.load(open(f"RESULT_{REL}.json", encoding="utf-8")).get("freeze_manifest") != man["manifest_sha256"]:
         raise SystemExit("multivers interdit : RESULT ne correspond pas au gel en cours (fichier étranger ou périmé)")
     K = pd.read_pickle(f"K_{REL}.pkl"); b, slope, _ = hr_band(K)

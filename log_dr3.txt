@@ -43,3 +43,74 @@
  "freeze_manifest": "f61805ed786c8943f6f314849397858b13bee4415643251e4a42a3eb327a84a5"
 }
 23:24:26 multivers : 108 spécifications ; S médian +0.063 ; part S > +0,075 : 0.41
+07:27:47 crible par époques absent (étape epoch non lancée ou DR3) : ignoré
+07:27:47 [AVEUGLE] spécification principale : N = 1189 (cible 2000, minimum 1000) ; HR intercept 1.861 ; r/rM : 567 bas, 154 hauts
+07:27:47 [AVEUGLE] médianes binées (permutées, sans information physique) : [{'lo': 0.1, 'hi': 0.2, 'n': 332, 'med': 0.524}, {'lo': 0.2, 'hi': 0.5, 'n': 492, 'med': 0.529}, {'lo': 0.5, 'hi': 1.0, 'n': 211, 'med': 0.563}, {'lo': 1.0, 'hi': 2.0, 'n': 106, 'med': 0.483}, {'lo': 2.0, 'hi': 6.0, 'n': 48, 'med': 0.55}]
+07:27:47 [AVEUGLE] S permuté = -0.036 (attendu ≈ 0)
+07:28:06 calibration : 5000 simulations (19 s) ; S Newton +0.005 ± 0.063 ; S MOND +0.147 ± 0.073 ; séparation attendue 2.3 σ
+07:29:56 enveloppe de contamination (epoques+image_pess, 110 s) : S newtonien moyen par f_in : 0.0 → +0.004, 0.1 → +0.011, 0.2 → +0.017, 0.3 → +0.027, 0.4 → +0.036, 0.5 → +0.045 ; séparation MOND vs pire Newton : 1.6 σ
+07:30:02 gel enregistré : 2026-10-17T05:30:02Z manifeste 17eb15f1e393acbb
+07:30:07 [LEVÉE] {
+ "S_obs": 0.06589500647839652,
+ "p_newton": 0.40559440559440557,
+ "p_newton_gauss": 0.4195475573913199,
+ "p_newton_pur": 0.16696660667866425,
+ "p_mond": 0.1349730053989202,
+ "p_mond_gauss": 0.13609500763281024,
+ "S_newton_mean": 0.004765830490531434,
+ "S_newton_env_max": 0.04502094608069341,
+ "S_mond_mean": 0.14658367079715826,
+ "sigma_S": 0.06270520171538364,
+ "separation_sigma": 2.076154786779097,
+ "separation_sigma_env": 1.4868364700979246,
+ "envelope": [
+  {
+   "f_in": 0.0,
+   "S_mean": 0.00396822320172914,
+   "S_sd": 0.06522968653782894,
+   "p": 0.15884115884115885,
+   "p_gauss": 0.17121749499902017
+  },
+  {
+   "f_in": 0.1,
+   "S_mean": 0.011034913903558357,
+   "S_sd": 0.06909837721330746,
+   "p": 0.21178821178821178,
+   "p_gauss": 0.21361464600825725
+  },
+  {
+   "f_in": 0.2,
+   "S_mean": 0.016615783011692302,
+   "S_sd": 0.0736694769331204,
+   "p": 0.25574425574425574,
+   "p_gauss": 0.25177222975966174
+  },
+  {
+   "f_in": 0.3,
+   "S_mean": 0.02733776888011672,
+   "S_sd": 0.08172188307343357,
+   "p": 0.3156843156843157,
+   "p_gauss": 0.3185310492488079
+  },
+  {
+   "f_in": 0.4,
+   "S_mean": 0.03559176994705801,
+   "S_sd": 0.09100171272890961,
+   "p": 0.34665334665334663,
+   "p_gauss": 0.36956852602811996
+  },
+  {
+   "f_in": 0.5,
+   "S_mean": 0.04502094608069341,
+   "S_sd": 0.10280202073919936,
+   "p": 0.40559440559440557,
+   "p_gauss": 0.4195475573913199
+  }
+ ],
+ "verdict": "Non concluant",
+ "N": 1189,
+ "binned_log10_newton_over_mond": 0.7892095227772278,
+ "unblinded_utc": "2026-10-17T05:30:07Z",
+ "freeze_manifest": "17eb15f1e393acbb44a702ab3a1e10ea7d434fb7fe175ae10dbf85cc504c1b8a"
+}
+07:43:16 multivers : 108 spécifications ; S médian +0.063 ; part S > +0,075 : 0.41

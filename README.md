@@ -41,6 +41,7 @@ Les fins de ligne sont imposées en LF (`.gitattributes`) pour que les empreinte
 - **Crible DR4 des compagnons cachés** : solution astrométrique et RV simples ; `unreliable_astrometry` faux ; `blended` = 0 ; ni SB2 ni raies dédoublées ; `rv_renormalised_gof` inférieur à 4 ; `non_single_star` = 0 ; `sea_env_flag` = 0.
 - **Statistique** : S = médiane(ṽ | r/rM > 1) / médiane(ṽ | r/rM < 0,3) − 1.
 - **Décision** : rejet d'une hypothèse si p < 0,00135 (3σ unilatéral), à la fois en simulation et en approximation gaussienne. Sinon le résultat est « non concluant ». En dessous de 1000 paires, l'étude est déclarée sous-dimensionnée.
+- **Hypothèse nulle newtonienne (v0.5)** : Newton pur **et** Newton contaminé par des compagnons cachés, pour une fraction de composantes de 0 à 50 % (crible époques + image pessimiste, `contamination.py`). « Newton rejeté » exige le rejet pour chaque valeur de l'enveloppe. Les simulations MOND restent pures, ce qui est prudent puisque la contamination pousse S vers le haut.
 
 ## Répétition générale sur Gaia DR3 (16/10/2026)
 

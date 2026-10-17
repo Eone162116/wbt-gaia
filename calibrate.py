@@ -43,17 +43,44 @@ def calibrate(x, vc, sv, n_mocks=5000, seed=0, stat_kw=None, **kw):
            for t in ("newton", "mond")}
     return pd.DataFrame(out)
 
-def decide(S_obs, mocks, p_thr=0.00135):
-    n, m = mocks.newton.dropna().values, mocks.mond.dropna().values
-    p_newton = (np.sum(n >= S_obs) + 1)/(len(n) + 1)       # P(S ≥ S_obs | Newton)
-    p_mond = (np.sum(m <= S_obs) + 1)/(len(m) + 1)         # P(S ≤ S_obs | MOND)
-    # approximation gaussienne pour les queues au-delà de la résolution des simulations
+def calibrate_envelope(geo, n_per_f=1000, seed=0, stat_kw=None, cfg=None, vtmax=BASE["vtmax"], dvsky=BASE["dvsky"]):
+    """Hypothèse nulle newtonienne contaminée, pour chaque f_in de l'enveloppe (v0.5)."""
+    import contamination as ct
+    rng = np.random.default_rng(seed + 1); stat_kw = stat_kw or {}; rows = []
+    for f in cfg["f_in"]:
+        for _ in range(n_per_f):
+            xx, vv = ct.contaminated_newton(geo, f, rng, cfg, vtmax, dvsky, kepler_geometry)
+            rows.append((f, step_stat(xx, vv, **stat_kw)))
+    return pd.DataFrame(rows, columns=["f_in", "S"])
+
+def _p_upper(s, S_obs):
     from scipy.stats import norm
-    pg_newton = norm.sf(S_obs, n.mean(), n.std()); pg_mond = norm.cdf(S_obs, m.mean(), m.std())
-    if p_mond < p_thr and pg_mond < p_thr and not (p_newton < p_thr): verdict = "MOND rejeté (Newton favorisé)"
-    elif p_newton < p_thr and pg_newton < p_thr and not (p_mond < p_thr): verdict = "Newton rejeté (MOND favorisé)"
-    elif p_newton < p_thr and p_mond < p_thr: verdict = "Les deux rejetés (ni Newton ni MOND : systématique ou autre physique)"
+    s = s[np.isfinite(s)]
+    return (np.sum(s >= S_obs) + 1)/(len(s) + 1), float(norm.sf(S_obs, s.mean(), s.std()))
+
+def decide(S_obs, mocks, p_thr=0.00135, env=None):
+    from scipy.stats import norm
+    n, m = mocks.newton.dropna().values, mocks.mond.dropna().values
+    p_newton_pur, pg_newton_pur = _p_upper(n, S_obs)
+    p_mond = (np.sum(m <= S_obs) + 1)/(len(m) + 1); pg_mond = float(norm.cdf(S_obs, m.mean(), m.std()))
+    env_rows = []
+    if env is not None:
+        for f, g in env.groupby("f_in"):
+            pe, pge = _p_upper(g.S.values, S_obs)
+            env_rows.append(dict(f_in=float(f), S_mean=float(np.nanmean(g.S)), S_sd=float(np.nanstd(g.S)), p=pe, p_gauss=pge))
+    # nulle newtonienne : la plus difficile à rejeter parmi Newton pur et l'enveloppe contaminée
+    p_newton = max([p_newton_pur] + [r["p"] for r in env_rows])
+    pg_newton = max([pg_newton_pur] + [r["p_gauss"] for r in env_rows])
+    newton_rej = p_newton < p_thr and pg_newton < p_thr
+    mond_rej = p_mond < p_thr and pg_mond < p_thr
+    if mond_rej and not newton_rej: verdict = "MOND rejeté (Newton favorisé)"
+    elif newton_rej and not mond_rej: verdict = "Newton rejeté pour toute contamination de l'enveloppe (MOND favorisé)"
+    elif newton_rej and mond_rej: verdict = "Les deux rejetés (ni Newton ni MOND : systématique ou autre physique)"
     else: verdict = "Non concluant"
     sep = (m.mean() - n.mean())/np.sqrt(0.5*(n.var() + m.var()))
-    return dict(S_obs=S_obs, p_newton=p_newton, p_mond=p_mond, p_newton_gauss=pg_newton, p_mond_gauss=pg_mond,
-                S_newton_mean=n.mean(), S_mond_mean=m.mean(), sigma_S=n.std(), separation_sigma=sep, verdict=verdict)
+    S_env_max = max([float(n.mean())] + [r["S_mean"] for r in env_rows])
+    sep_env = (m.mean() - S_env_max)/np.sqrt(0.5*(n.var() + m.var()))
+    return dict(S_obs=S_obs, p_newton=p_newton, p_newton_gauss=pg_newton, p_newton_pur=p_newton_pur,
+                p_mond=p_mond, p_mond_gauss=pg_mond, S_newton_mean=n.mean(), S_newton_env_max=S_env_max,
+                S_mond_mean=m.mean(), sigma_S=n.std(), separation_sigma=sep, separation_sigma_env=sep_env,
+                envelope=env_rows, verdict=verdict)

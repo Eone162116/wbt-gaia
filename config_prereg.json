@@ -72,12 +72,35 @@
   "calibration": {
     "n_mocks": 5000,
     "seed": 20261202,
-    "eccentricity": "thermal"
+    "eccentricity": "thermal",
+    "contamination": {
+      "_comment": "Enveloppe de l'hypothèse nulle newtonienne : compagnons internes cachés (validation_contamination/). Newton n'est rejeté que s'il l'est pour chaque valeur de f_in.",
+      "f_in": [
+        0.0,
+        0.1,
+        0.2,
+        0.3,
+        0.4,
+        0.5
+      ],
+      "n_mocks_per_f": 1000,
+      "screen": "epoques+image_pess",
+      "period_lognormal": [
+        5.03,
+        2.28
+      ],
+      "q_range": [
+        0.05,
+        1.0
+      ],
+      "stability": 0.2
+    }
   },
   "decision": {
     "p_threshold": 0.00135,
     "n_min_powered": 1000,
-    "n_target": 2000
+    "n_target": 2000,
+    "null_newton": "enveloppe_max"
   },
   "multiverse": {
     "degroup": [
