@@ -76,6 +76,16 @@ Validation sur la pré-publication DR4 (12 sources, juin 2026), dans `validation
 
 Angle mort restant : au-delà d'environ 30 au, l'accélération devient trop faible sur 5,5 ans. À 130 pc, le crible doit alors être pris en charge par les drapeaux image (`ipd_frac_multi_peak`, `sea_env_flag`, `nss_resolved_pair`), dont la limite de résolution reste à quantifier.
 
+## Fraction de compagnons cachés mesurée sur les données (v0.6)
+
+L'enveloppe newtonienne ne balaie plus f_in de 0 à 0,5 : f_in est mesuré à partir de la fraction de paires candidates signalées. Sur DR3, c'est la fraction avec RUWE > 1,25 ; sur DR4, la fraction signalée par le crible par époques. Ces paires candidates passent toutes les coupes indépendantes des vitesses : la mesure respecte donc l'aveuglement. L'inversion utilise le modèle de détection (`finfer.py`, `validation_contamination/pgrid*.npy`) pour deux formes de population : type solaire (Raghavan et al. 2010) et naines M (POKEMON, pic à 7,9 au). La bande est ± 2σ binomiale, élargie sur le taux de faux positifs r0.
+
+Répétition DR3 : 22,9 % des 2021 paires candidates signalées ; f_in = 0,23–0,38 (type solaire) ou 0,14–0,23 (naines M). Le biais newtonien maximal passe de +0,055 (f_in = 0,5) à environ +0,03.
+
+Effet attendu sur DR4 : à N = 5000, la probabilité de rejeter Newton si MOND est vrai passe de 0,09 à 0,37 ; à N = 10 000, de 0,41 à 0,86. La probabilité de rejeter MOND ne dépend pas de l'enveloppe.
+
+Essais écartés : une marche fondée sur le quartile inférieur de ṽ au lieu de la médiane donne le même biais avec plus de bruit. La médiane est conservée.
+
 ## Changements v0.3
 
 - **Encodage** : UTF-8 explicite partout ; le journal plantait sous Windows (cp1252).

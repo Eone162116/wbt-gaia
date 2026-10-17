@@ -93,7 +93,28 @@
         0.05,
         1.0
       ],
-      "stability": 0.2
+      "stability": 0.2,
+      "f_in_mode": "mesure",
+      "_comment_v06": "f_in mesuré sur les données (taux de drapeaux des paires candidates, sans vitesses) via finfer.py ; bande ± nsig binomiale, élargie sur r0 et sur la forme de population. f_in (liste) ne sert qu'en mode 'fixe'.",
+      "shapes": [
+        "raghavan2010",
+        "mdwarf_pokemon"
+      ],
+      "nsig": 2.0,
+      "r0": {
+        "dr3": [
+          0.01,
+          0.04
+        ],
+        "dr4": [
+          0.001,
+          0.01
+        ]
+      },
+      "screen_by_release": {
+        "dr3": "dr3_ruwe+image_pess",
+        "dr4": "epoques+image_pess"
+      }
     }
   },
   "decision": {

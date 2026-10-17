@@ -43,15 +43,17 @@ def calibrate(x, vc, sv, n_mocks=5000, seed=0, stat_kw=None, **kw):
            for t in ("newton", "mond")}
     return pd.DataFrame(out)
 
-def calibrate_envelope(geo, n_per_f=1000, seed=0, stat_kw=None, cfg=None, vtmax=BASE["vtmax"], dvsky=BASE["dvsky"]):
-    """Hypothèse nulle newtonienne contaminée, pour chaque f_in de l'enveloppe (v0.5)."""
+def calibrate_envelope(geo, n_per_f=1000, seed=0, stat_kw=None, cfg=None, vtmax=BASE["vtmax"], dvsky=BASE["dvsky"], scenarios=None):
+    """Hypothèse nulle newtonienne contaminée. scenarios : liste (forme, f_in) ; par défaut cfg['f_in'] (mode fixe, v0.5)."""
     import contamination as ct
     rng = np.random.default_rng(seed + 1); stat_kw = stat_kw or {}; rows = []
-    for f in cfg["f_in"]:
+    scenarios = scenarios or [(cfg.get("shape", "raghavan2010"), f) for f in cfg["f_in"]]
+    for shape, f in scenarios:
+        c = dict(cfg, shape=shape)
         for _ in range(n_per_f):
-            xx, vv = ct.contaminated_newton(geo, f, rng, cfg, vtmax, dvsky, kepler_geometry)
-            rows.append((f, step_stat(xx, vv, **stat_kw)))
-    return pd.DataFrame(rows, columns=["f_in", "S"])
+            xx, vv = ct.contaminated_newton(geo, f, rng, c, vtmax, dvsky, kepler_geometry)
+            rows.append((shape, f, step_stat(xx, vv, **stat_kw)))
+    return pd.DataFrame(rows, columns=["shape", "f_in", "S"])
 
 def _p_upper(s, S_obs):
     from scipy.stats import norm
@@ -65,9 +67,12 @@ def decide(S_obs, mocks, p_thr=0.00135, env=None):
     p_mond = (np.sum(m <= S_obs) + 1)/(len(m) + 1); pg_mond = float(norm.cdf(S_obs, m.mean(), m.std()))
     env_rows = []
     if env is not None:
-        for f, g in env.groupby("f_in"):
+        keys = ["shape", "f_in"] if "shape" in env.columns else ["f_in"]
+        for key, g in env.groupby(keys):
+            key = key if isinstance(key, tuple) else (key,)
             pe, pge = _p_upper(g.S.values, S_obs)
-            env_rows.append(dict(f_in=float(f), S_mean=float(np.nanmean(g.S)), S_sd=float(np.nanstd(g.S)), p=pe, p_gauss=pge))
+            lab = {k: (v if isinstance(v, str) else float(v)) for k, v in zip(keys, key)}
+            env_rows.append(dict(**lab, S_mean=float(np.nanmean(g.S)), S_sd=float(np.nanstd(g.S)), p=pe, p_gauss=pge))
     # nulle newtonienne : la plus difficile à rejeter parmi Newton pur et l'enveloppe contaminée
     p_newton = max([p_newton_pur] + [r["p"] for r in env_rows])
     pg_newton = max([pg_newton_pur] + [r["p_gauss"] for r in env_rows])

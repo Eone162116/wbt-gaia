@@ -7,17 +7,35 @@ import os, numpy as np
 from scipy.interpolate import RegularGridInterpolator
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
-_PG = np.load(os.path.join(_HERE, "validation_contamination", "pgrid.npy"))
-_INTERP = RegularGridInterpolator((np.linspace(-2.5, 2.5, 21), np.linspace(-2.5, 4.0, 21)), _PG, bounds_error=False, fill_value=None)
+_AX = (np.linspace(-2.5, 2.5, 21), np.linspace(-2.5, 4.0, 21))
+_GRIDS = {}
+def _grid(name):
+    """'dr4' : crible par époques DR4 (pgrid.npy) ; 'dr3' : RUWE > 1,25 émulé sur la fenêtre DR3 (pgrid_dr3.npy)."""
+    if name not in _GRIDS:
+        f = {"dr4": "pgrid.npy", "dr3": "pgrid_dr3.npy"}[name]
+        _GRIDS[name] = RegularGridInterpolator(_AX, np.load(os.path.join(_HERE, "validation_contamination", f)), bounds_error=False, fill_value=None)
+    return _GRIDS[name]
 _MTAB = np.array([0.05, 0.075, 0.08, 0.09, 0.10, 0.16, 0.23, 0.30, 0.37, 0.44, 0.50, 0.57, 0.60, 0.63, 0.70, 0.80, 1.0, 1.2])
 _GTAB = np.array([20.0, 17.5, 17.0, 16.2, 15.1, 13.3, 12.0, 11.3, 10.6, 9.85, 9.25, 8.65, 8.4, 8.1, 7.5, 6.3, 4.7, 3.9])
 _TAU = np.linspace(-2.75, 2.75, 40)
 
-def p_epoch(alpha, Pyr):
-    """Probabilité de détection par le crible par époques (mesurée sur l'échantillonnage réel DR4)."""
+def p_epoch(alpha, Pyr, grid="dr4"):
+    """Probabilité de détection astrométrique (mesurée sur l'échantillonnage réel de Gaia)."""
     la = np.log10(np.maximum(alpha, 1e-9))
-    p = np.clip(_INTERP(np.stack([np.clip(la, -2.5, 2.5), np.clip(np.log10(Pyr), -2.5, 4.0)], -1)), 0, 1)
+    p = np.clip(_grid(grid)(np.stack([np.clip(la, -2.5, 2.5), np.clip(np.log10(Pyr), -2.5, 4.0)], -1)), 0, 1)
     return np.where(la < -2.5, 0.0, p)
+
+SHAPES = {"raghavan2010": dict(kind="logP_days", mu=5.03, sig=2.28),          # type solaire (Raghavan et al. 2010)
+          "mdwarf_pokemon": dict(kind="loga_au", mu=float(np.log10(7.91)), sig=1.1)}  # naines M (POKEMON 15 pc)
+
+def draw_companions(m1, q, rng, shape):
+    s = SHAPES[shape] if isinstance(shape, str) else shape
+    n = len(m1)
+    if s["kind"] == "logP_days":
+        Pyr = 10**rng.normal(s["mu"], s["sig"], n)/365.25; a = (Pyr**2*m1*(1 + q))**(1/3)
+    else:
+        a = 10**rng.normal(s["mu"], s["sig"], n); Pyr = np.sqrt(a**3/(m1*(1 + q)))
+    return a, Pyr
 
 def mg_of_mass(m): return np.interp(m, _MTAB, _GTAB)
 
@@ -42,26 +60,26 @@ def contaminated_newton(geo, f_in, rng, cfg, vtmax, dvsky, kepler_geometry):
     vt_vec, _ = kepler_geometry(N, rng)
     v = vt_vec*geo["vc"][:, None]
     M_hidden = np.zeros(N); kick = np.zeros((N, 2)); removed = np.zeros(N, bool)
-    mu, sig = cfg["period_lognormal"]; qlo, qhi = cfg["q_range"]
+    qlo, qhi = cfg["q_range"]; shape = cfg.get("shape", "raghavan2010")
     for mc, Gc in (("m1", "G1"), ("m2", "G2")):
         has = rng.random(N) < f_in
-        Pd = 10**rng.normal(mu, sig, N); q = rng.uniform(qlo, qhi, N); m1 = geo[mc]
-        a_in = ((Pd/365.25)**2*m1*(1 + q))**(1/3)
+        q = rng.uniform(qlo, qhi, N); m1 = geo[mc]
+        a_in, P_all = draw_companions(m1, q, rng, shape)
         has &= a_in < cfg["stability"]*geo["rsky"]
         i = np.where(has)[0]
         if len(i) == 0: continue
-        Pyr, qq, aa, d = Pd[i]/365.25, q[i], a_in[i], geo["d"][i]
+        Pyr, qq, aa, d = P_all[i], q[i], a_in[i], geo["d"][i]
         alpha = 1000*aa*np.abs(qq/(1 + qq) - qq**4/(1 + qq**4))/d
         kick[i] += 4.740470446*photocentre_pm(np.maximum(alpha, 1e-9), Pyr, rng)*d[:, None]/1000
         M_hidden[i] += qq*m1[i]
         scr = cfg["screen"]
         if scr == "aucun": continue
-        det = rng.random(len(i)) < p_epoch(alpha, Pyr)
-        if scr in ("epoques+image_pess", "epoques+image_opt"):
+        det = rng.random(len(i)) < p_epoch(alpha, Pyr, "dr3" if scr.startswith("dr3_") else "dr4")
+        if scr in ("epoques+image_pess", "epoques+image_opt", "dr3_ruwe+image_pess", "dr3_ruwe+image_opt"):
             dG = mg_of_mass(qq*m1[i]) - mg_of_mass(m1[i]); G2 = geo[Gc][i] + dG
             rho = aa*np.sqrt(1 - rng.uniform(-1, 1, len(i))**2)/d
             vis = G2 < 20.7
-            if scr == "epoques+image_pess":
+            if scr.endswith("image_pess"):
                 p_img = vis/(1 + np.exp(-(np.log10(rho) - np.log10(theta50(dG)))/0.05))
             else:
                 p_img = (vis & (rho > 0.15)).astype(float)

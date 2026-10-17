@@ -14,7 +14,10 @@ CFG = json.load(open("config_prereg.json", encoding="utf-8"))
 REL = sys.argv[1]; STAGE = sys.argv[2]
 P = CFG["primary"]; ST = CFG["statistic"]
 CODE = ["wbt_pipeline.py", "calibrate.py", "blind.py", "run_wbt.py", "fetch_gaia.py", "epoch_accel.py", "contamination.py",
-        "validation_contamination/pgrid.npy", "config_prereg.json"]
+        "finfer.py", "validation_contamination/pgrid.npy", "validation_contamination/pgrid_dr3.npy", "config_prereg.json"]
+def frozen_files():
+    mes = CFG["calibration"]["contamination"].get("f_in_mode") == "mesure"
+    return CODE + [f"mocks_{REL}.csv", f"envelope_{REL}.csv"] + ([f"finfer_{REL}.csv"] if mes else [])
 pattern = f"{REL}_*.csv" if glob.glob(f"{REL}_*.csv") else "s40_*.csv"      # s40_* = tranches DR3 de développement
 
 def log(*a):
@@ -90,13 +93,31 @@ if STAGE in ("blind", "all"):
     dmod = 5*np.log10(S.d.values/10)
     geo = dict(x=x, vc=vc, sv=sv, d=S.d.values, rsky=S.rsky.values, M=S.M.values, m1=_mass(S.MG1.values), m2=_mass(S.MG2.values),
                G1=S.MG1.values + dmod, G2=S.MG2.values + dmod)
-    CC = C["contamination"]; t2 = time.time()
+    CC = dict(C["contamination"]); t2 = time.time()
+    CC["screen"] = CC.get("screen_by_release", {}).get(REL, CC["screen"])
+    scenarios = None
+    if CC.get("f_in_mode") == "mesure":            # v0.6 : f_in mesuré sur les drapeaux des paires candidates, sans vitesses
+        import finfer as fi
+        hb, hs, _ = hr_band(K)
+        if P["hr_intercept"] is not None: hb = P["hr_intercept"]
+        mc, _ = select(K, (hb, hs, P["hr_height"]), dmax=P["dmax"], smin=P["smin"], smax=P["smax"], svt=P["svt"], sph=P["sph"],
+                       hr=P["hr"], degroup=P["degroup"], screen="dr3", epoch=False, ipd=False, ruwe=1e9, vtmax=1e9, dvsky=1e9, drv=1e9)
+        Cd = K[mc]
+        if REL == "dr4" and "epoch_ok" in Cd.columns: flags, grid = (~Cd.epoch_ok.astype(bool)).values, "dr4"
+        else: flags, grid = (Cd.ruwe_max > 1.25).values, "dr3"
+        band, r, sr = fi.infer_band(flags, _mass(Cd.MG1.values), _mass(Cd.MG2.values), Cd.d.values, Cd.rsky.values, CC["shapes"],
+                                    grid, CC["r0"][grid], CC["nsig"], seed=C["seed"], stability=CC["stability"], q_range=CC["q_range"])
+        scenarios = [(sh, f) for sh, fs in band.items() for f in fs]
+        pd.DataFrame([dict(shape=sh, f_bas=fs[0], f_central=fs[1], f_haut=fs[2], taux=r, taux_err=sr, n=len(flags), drapeau=grid)
+                      for sh, fs in band.items()]).to_csv(f"finfer_{REL}.csv", index=False)
+        log(f"f_in mesuré (drapeau {grid}, sans vitesses) : taux signalé {r:.3f} ± {sr:.3f} sur {len(flags)} paires candidates ; "
+            + " ; ".join(f"{sh} {fs[0]:.2f}–{fs[2]:.2f}" for sh, fs in band.items()))
     env = cal.calibrate_envelope(geo, n_per_f=CC["n_mocks_per_f"], seed=C["seed"], stat_kw=dict(x_low=ST["x_low"], x_high=ST["x_high"]),
-                                 cfg=CC, vtmax=P["vtmax"], dvsky=P["dvsky"])
+                                 cfg=CC, vtmax=P["vtmax"], dvsky=P["dvsky"], scenarios=scenarios)
     env.to_csv(f"envelope_{REL}.csv", index=False)
-    g = env.groupby("f_in").S
-    log(f"enveloppe de contamination ({CC['screen']}, {time.time()-t2:.0f} s) : S newtonien moyen par f_in : "
-        + ", ".join(f"{f:.1f} → {v:+.3f}" for f, v in g.mean().items())
+    g = env.groupby(["shape", "f_in"]).S
+    log(f"enveloppe de contamination ({CC['screen']}, {time.time()-t2:.0f} s) : S newtonien moyen : "
+        + ", ".join(f"{sh[:8]} {f:.2f} → {v:+.3f}" for (sh, f), v in g.mean().items())
         + f" ; séparation MOND vs pire Newton : {(mocks.mond.mean() - g.mean().max())/mocks.newton.std():.1f} σ")
 
 def frozen_arrays():
@@ -104,12 +125,12 @@ def frozen_arrays():
     return dict(sample_ids=np.sort(np.concatenate([s.sid1.values, s.sid2.values]).astype(np.int64)))
 
 if STAGE == "freeze":
-    files = CODE + [f"mocks_{REL}.csv", f"envelope_{REL}.csv"]
+    files = frozen_files()
     man = bl.freeze(f"FREEZE_{REL}.json", files, frozen_arrays())
     log("gel enregistré :", man["frozen_at_utc"], "manifeste", man["manifest_sha256"][:16])
 
 if STAGE == "unblind":
-    man = bl.verify(f"FREEZE_{REL}.json", CODE + [f"mocks_{REL}.csv", f"envelope_{REL}.csv"], frozen_arrays())
+    man = bl.verify(f"FREEZE_{REL}.json", frozen_files(), frozen_arrays())
     K = pd.read_pickle(f"K_{REL}.pkl"); m, vt, b = primary_selection(K)
     x = K.x.values[m]; v = vt[m]
     S_obs = cal.step_stat(x, v, ST["x_low"], ST["x_high"])
@@ -124,7 +145,7 @@ if STAGE == "unblind":
 if STAGE == "multiverse":
     if not (os.path.exists(f"RESULT_{REL}.json") and os.path.exists(f"FREEZE_{REL}.json")):
         raise SystemExit("multivers interdit avant la levée de l'aveuglement")
-    man = bl.verify(f"FREEZE_{REL}.json", CODE + [f"mocks_{REL}.csv", f"envelope_{REL}.csv"], frozen_arrays())
+    man = bl.verify(f"FREEZE_{REL}.json", frozen_files(), frozen_arrays())
     if json.load(open(f"RESULT_{REL}.json", encoding="utf-8")).get("freeze_manifest") != man["manifest_sha256"]:
         raise SystemExit("multivers interdit : RESULT ne correspond pas au gel en cours (fichier étranger ou périmé)")
     K = pd.read_pickle(f"K_{REL}.pkl"); b, slope, _ = hr_band(K)

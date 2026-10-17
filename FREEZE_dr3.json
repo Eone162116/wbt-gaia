@@ -1,20 +1,23 @@
 {
-  "frozen_at_utc": "2026-10-17T05:30:02Z",
+  "frozen_at_utc": "2026-10-17T06:01:58Z",
   "files": {
     "wbt_pipeline.py": "44fd732a4cb348a3b2ab5d716aa516683f9909a653e786151bfd8c7771db0e05",
-    "calibrate.py": "f992ea7ca6a45d4df90c6af303737a8597905ccb258029101d3dc4d74b9a3c38",
+    "calibrate.py": "5387af0e3f632f0039eed5ef650393a43ad5391cd8930b038d57e37a6e68ee21",
     "blind.py": "ac581a29eaf183497dc08107ea8144483dc5ab263391ce9a5ca6f3bb5e97b504",
-    "run_wbt.py": "bfdf49b9d88a4be097188de097975d4fa2e32cc5a8c1e041438c811ef8cd8dc6",
+    "run_wbt.py": "13930b2caa2f9554c607197744ea46af4351a64f49deb8bb6695439ae22f8342",
     "fetch_gaia.py": "0e794bc337d921e17a29ff807c616577cbf014365a8c6d53fa9fe108944636ab",
     "epoch_accel.py": "a6ed8cca4f5bfb0fb7f39d9993217f8f1a37fc5eb295c8326feef379706c7fff",
-    "contamination.py": "12481df8d9737e523b0225f3c12a4a9eac8e44e79765f5093352d5b59c4cdccd",
+    "contamination.py": "ea35db6026ca151a9a1ba7b4fec34dd9c0deba23ab04ebab7715316edff91d46",
+    "finfer.py": "54c0a3d6c9da2e164a24eadb79d8e698f4eec1883c27edbaa604e6503928086c",
     "validation_contamination/pgrid.npy": "8bb4ebefaf8b581b2f71adcf01ea6141b85380068bd78f25ee5c246262b5b6c0",
-    "config_prereg.json": "675a19e9820fa92ec9fc5c34d782f8519c4cc67ec93f87ee21e0b9e1b812fd89",
+    "validation_contamination/pgrid_dr3.npy": "54dff79c0354bc4fbcea00b50818aeb01316527b70fb80f2721e3507989c255c",
+    "config_prereg.json": "f6c525e02e104d0711bf94790bc5ca0cd8ccb20cb7b51893cf24c00c680819c6",
     "mocks_dr3.csv": "56fa9320108092512e29175714a2ebe5f9bdf4913078b7e5ea2338255828b4b1",
-    "envelope_dr3.csv": "999837f85df0f31e4a6e9699135f973cb6bb299bff7cefc8b7c325aba759fe3f"
+    "envelope_dr3.csv": "c1280c5f70a13364c03d6afe0ea6674acf0ea44e4fe4287fb6e5a83b3db76c77",
+    "finfer_dr3.csv": "fe02a5cb71e95dc3c65b7010e23463ca2fcfc3b5824407073e0cefbd2a704a59"
   },
   "arrays": {
     "sample_ids": "270252d193c09ec38afd57a154c442f34ed2694315a8ec25ea8d5a17a8de1381"
   },
-  "manifest_sha256": "17eb15f1e393acbb44a702ab3a1e10ea7d434fb7fe175ae10dbf85cc504c1b8a"
+  "manifest_sha256": "9ad991e900db01c962059ed4220256f6a410453868d83cc24e8d64e9e15bfb2a"
 }
