@@ -1,7 +1,7 @@
 """Calibration par simulations, utilisable AVANT la levée de l'aveuglement : elle n'utilise que la géométrie
 (r/rM, masse, v_c) et les incertitudes de l'échantillon final, jamais les vitesses observées."""
 import numpy as np, pandas as pd
-from wbt_pipeline import nu, GNE, BASE
+from wbt_pipeline import nu, GNE, BASE, observe
 
 def step_stat(x, vt, x_low=0.3, x_high=1.0):
     lo, hi = vt[x < x_low], vt[x > x_high]
@@ -32,7 +32,7 @@ def kepler_geometry(n, rng, ecc="thermal"):
 def simulate(x, vc, sv, truth, rng, vtmax=BASE["vtmax"], dvsky=BASE["dvsky"], ecc="thermal"):
     vt_vec, ratio = kepler_geometry(len(x), rng, ecc)
     if truth == "mond": vt_vec = vt_vec*mond_boost3d(x*ratio)[:, None]
-    v = vt_vec*vc[:, None] + rng.normal(0, 1, (len(x), 2))*sv[:, None]
+    v = observe(vt_vec*vc[:, None], sv, rng)
     va = np.linalg.norm(v, axis=1); vt = va/vc
     keep = (vt < vtmax) & (va < dvsky)
     return x[keep], vt[keep]

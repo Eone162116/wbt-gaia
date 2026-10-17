@@ -89,6 +89,7 @@ Essais écartés : une marche fondée sur le quartile inférieur de ṽ au lieu 
 ## Changements v0.7 (audit externe du 17/10/2026)
 
 - **v0.7-A** : équation MOND conforme à Cookson et al. 2026 (éq. 7). Le terme de champ externe est [tanh(0,825 g_N,e/g_N,i)]^3,7, et non tanh((·)^3,7). L'écart sur le boost allait jusqu'à 1,5 % vers x ≈ 1. Test de conformité : `python tests/test_mond_eq7.py`. Les scripts archivés de `exploration_dr3/` gardent l'ancienne forme, comme trace de l'exploration.
+- **v0.7-C** : sélection. σ(ṽ) vient désormais de la covariance complète de Δμ, avec `pmra_pmdec_corr` et une moyenne en direction, sans le terme proportionnel à la vitesse observée : la coupe σ(ṽ) < 0,1 ne dépend plus des vitesses. Les simulations tirent leur bruit dans cette covariance, avec en plus l'erreur d'échelle due à la distance. Les candidats du crible par époques sont choisis sans aucune coupe en vitesse. Chaque paire a l'un de trois états (propre, signalé, manquant), et f_in est mesuré sur les seules paires évaluées.
 
 ## Changements v0.3
 

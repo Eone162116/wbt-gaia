@@ -53,34 +53,40 @@ if STAGE == "epoch" or (STAGE == "all" and REL == "dr4"):
     if REL != "dr4": raise SystemExit("astrométrie par époque disponible seulement pour DR4")
     import epoch_accel as ea
     K = pd.read_pickle(f"K_{REL}.pkl"); E = CFG["epoch"]; G = CFG["multiverse"]
-    # candidates = union des sélections les plus larges du multivers, hors crible par époques (≈ 12 000 composantes sur DR3)
-    hb, hs, _ = hr_band(K); cand = np.zeros(len(K), bool)
-    for sph in (False, True):
-        mm, _ = select(K, (hb, hs, 0.8), hr=False, sph=sph, dmax=max(G["dmax"]), ruwe=max(G["ruwe"]),
-                       degroup=None, screen="dr3", ipd=False, epoch=False)
-        cand |= mm
+    # v0.7-C : candidats = coupes indépendantes des vitesses seulement, sans RUWE ni dégroupage ni HR :
+    # sur-ensemble des candidats de f_in et de toutes les spécifications du multivers
+    hb, hs, _ = hr_band(K)
+    cand, _ = select(K, (hb, hs, 0.8), hr=False, sph=True, dmax=max(G["dmax"]), ruwe=1e9, degroup=None, screen="dr3",
+                     ipd=False, epoch=False, vtmax=1e9, dvsky=1e9, drv=1e9, svt=P["svt"])
     ids = np.unique(np.concatenate([K.sid1[cand], K.sid2[cand]]))
     log(f"crible par époques : téléchargement pour {len(ids)} composantes (≈ {len(ids)*0.15/1000:.1f} Go en RAW)")
     raw = ea.load_epoch_file(os.environ["WBT_EPOCH_FILE"]) if os.environ.get("WBT_EPOCH_FILE") else ea.fetch_epoch_dr4(ids)
     St = ea.test_all(ea.transits_from_table(raw)); St.to_csv(f"epoch_stats_{REL}.csv", index=False)
     bad = set(St.source_id[ea.flag(St, E["p_acc"], E["uwe_max"]) | (St.n_transits < E["min_transits"])])
-    have = set(St.source_id); ok = lambda s: (s in have) and (s not in bad)
-    K["epoch_ok"] = [ok(a) and ok(b) for a, b in zip(K.sid1, K.sid2)]
-    log(f"crible par époques : {len(ids)} composantes candidates, {len(have)} avec données, {len(bad)} signalées ;"
-        f" paires candidates retenues : {K.epoch_ok[cand].mean():.3f}")
+    have = set(St.source_id)
+    def _state(a, b):                       # v0.7-C : trois états distincts
+        if a in bad or b in bad: return "signalé"
+        if a not in have or b not in have: return "manquant"
+        return "propre"
+    K["epoch_state"] = [_state(a, b) for a, b in zip(K.sid1, K.sid2)]
+    K["epoch_ok"] = K.epoch_state == "propre"
+    cs = K.epoch_state[cand].value_counts(normalize=True)
+    log(f"crible par époques : {len(ids)} composantes candidates, {len(have)} avec données, {len(bad)} signalées ; paires candidates : "
+        + ", ".join(f"{k} {cs.get(k, 0):.3f}" for k in ("propre", "signalé", "manquant")))
     K.to_pickle(f"K_{REL}.pkl")
 
 if STAGE in ("blind", "all"):
     K = pd.read_pickle(f"K_{REL}.pkl"); m, vt, b = primary_selection(K)
     if P.get("epoch") and "epoch_ok" not in K.columns: log("crible par époques absent (étape epoch non lancée ou DR3) : ignoré")
-    S = K[m]; x = S.x.values; vc = S.vc.values; sv = (S.svt*S.vc).values; N = len(S)
+    S = K[m]; x = S.x.values; vc = S.vc.values; N = len(S)
+    sv = np.stack([S.cv_aa, S.cv_ad, S.cv_dd, S.fd], 1) if "cv_aa" in S.columns else (S.svt*S.vc).values   # v0.7-C
     vt_blind = bl.blind(vt[m])
     log(f"[AVEUGLE] spécification principale : N = {N} (cible {CFG['decision']['n_target']}, minimum {CFG['decision']['n_min_powered']})"
         f" ; HR intercept {b:.3f} ; r/rM : {np.sum(x < ST['x_low'])} bas, {np.sum(x > ST['x_high'])} hauts")
     B, _ = binned_test(x, vt_blind)
     log("[AVEUGLE] médianes binées (permutées, sans information physique) :", B[["lo", "hi", "n", "med"]].round(3).to_dict("records"))
     log(f"[AVEUGLE] S permuté = {cal.step_stat(x, vt_blind, ST['x_low'], ST['x_high']):+.3f} (attendu ≈ 0)")
-    pd.DataFrame(dict(sid1=S.sid1, sid2=S.sid2, x=x, M=S.M.values, vc=vc, sv=sv)).to_csv(f"sample_{REL}.csv", index=False)
+    pd.DataFrame(dict(sid1=S.sid1, sid2=S.sid2, x=x, M=S.M.values, vc=vc, sv=(S.svt*S.vc).values)).to_csv(f"sample_{REL}.csv", index=False)
     C = CFG["calibration"]; t = time.time()
     mocks = cal.calibrate(x, vc, sv, n_mocks=C["n_mocks"], seed=C["seed"], ecc=C["eccentricity"],
                           stat_kw=dict(x_low=ST["x_low"], x_high=ST["x_high"]), vtmax=P["vtmax"], dvsky=P["dvsky"])
@@ -103,7 +109,10 @@ if STAGE in ("blind", "all"):
         mc, _ = select(K, (hb, hs, P["hr_height"]), dmax=P["dmax"], smin=P["smin"], smax=P["smax"], svt=P["svt"], sph=P["sph"],
                        hr=P["hr"], degroup=P["degroup"], screen="dr3", epoch=False, ipd=False, ruwe=1e9, vtmax=1e9, dvsky=1e9, drv=1e9)
         Cd = K[mc]
-        if REL == "dr4" and "epoch_ok" in Cd.columns: flags, grid = (~Cd.epoch_ok.astype(bool)).values, "dr4"
+        if REL == "dr4" and "epoch_state" in Cd.columns:     # v0.7-C : seules les paires évaluées entrent dans le taux
+            n_man = int((Cd.epoch_state == "manquant").sum()); Cd = Cd[Cd.epoch_state != "manquant"]
+            flags, grid = (Cd.epoch_state == "signalé").values, "dr4"
+            log(f"f_in : {n_man} paires candidates sans données d'époque exclues du dénominateur")
         else: flags, grid = (Cd.ruwe_max > 1.25).values, "dr3"
         band, r, sr = fi.infer_band(flags, _mass(Cd.MG1.values), _mass(Cd.MG2.values), Cd.d.values, Cd.rsky.values, CC["shapes"],
                                     grid, CC["r0"][grid], CC["nsig"], seed=C["seed"], stability=CC["stability"], q_range=CC["q_range"])

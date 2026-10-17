@@ -134,20 +134,36 @@ def kinematics(df, P):
     dV = V2-V1
     v_sph = np.linalg.norm(dV-(dV*n).sum(1)[:, None]*n, axis=1)
     # incertitude sur v (mouvements propres + distance commune)
-    sa, sd = np.hypot(sa1, sa2), np.hypot(sd1, sd2)
-    sdmu = np.sqrt((dma*sa)**2+(dmd*sd)**2)/np.maximum(dmu, 1e-9)
-    sv = np.hypot(KAPPA*d/1000*sdmu, v_raw*epw/pw)
+    # v0.7-C : covariance de Δμ (deux étoiles, corrélation pmra/pmdec incluse) en (km/s)², et σ_v indépendant des vitesses
+    rc1, rc2 = (np.nan_to_num(c) for c in g("pmra_pmdec_corr"))
+    k2 = (KAPPA*d/1000)**2
+    cv_aa = k2*(sa1**2 + sa2**2); cv_dd = k2*(sd1**2 + sd2**2); cv_ad = k2*(rc1*sa1*sd1 + rc2*sa2*sd2)
+    sv = np.sqrt(0.5*(cv_aa + cv_dd))           # erreur 1D moyennée en direction, sans terme ∝ v
+    fd = epw/pw                                  # erreur relative sur la distance commune
     vc = VC_1AU*np.sqrt(M/rsky)
     rM = np.sqrt(GM_SUN*M/A0)/AU
     return pd.DataFrame(dict(
         d=d, rsky=rsky, M=M, x=rsky/rM, vc=vc,
         vt_sph=v_sph/vc, vt_raw=v_raw/vc, svt=sv/vc, v_sph=v_sph, v_raw=v_raw,
+        cv_aa=cv_aa, cv_ad=cv_ad, cv_dd=cv_dd, fd=fd,
         drv=np.abs(rv1-rv2), both_rv=np.isfinite(rv1) & np.isfinite(rv2),
         ruwe_max=np.maximum(*g("ruwe")), ipd_max=np.maximum(*g("ipd_frac_multi_peak")),
         c1=c1, c2=c2, MG1=MG1, MG2=MG2,
         nc10=np.maximum(P.nc10_i.values, P.nc10_j.values), nc40=np.maximum(P.nc40_i.values, P.nc40_j.values),
         sid1=df.source_id.values[P.i.values], sid2=df.source_id.values[P.j.values],
         scr4=np.logical_and(*g("scr4_star")), flags_ok=np.ones(len(P), bool)))
+
+def observe(v_true, sv, rng):
+    """Bruit d'observation simulé sur la vitesse relative projetée (km/s), v0.7-C.
+    sv : (N,) écart-type isotrope (ancien format) ou (N,4) [C_aa, C_ad, C_dd en (km/s)², σ_d/d]."""
+    sv = np.asarray(sv, float)
+    if sv.ndim == 1: return v_true + rng.normal(0, 1, v_true.shape)*sv[:, None]
+    caa, cad, cdd, fd = sv.T
+    l11 = np.sqrt(np.maximum(caa, 0)); l21 = np.where(l11 > 0, cad/np.maximum(l11, 1e-300), 0.0)
+    l22 = np.sqrt(np.maximum(cdd - l21**2, 0))
+    z = rng.normal(0, 1, v_true.shape)
+    scale = np.clip(1 + fd*rng.normal(0, 1, len(fd)), 0.5, 1.5)**1.32   # ṽ ∝ d^1,32 (vitesse, séparation, masse photométrique)
+    return v_true*scale[:, None] + np.stack([l11*z[:, 0], l21*z[:, 0] + l22*z[:, 1]], 1)
 
 # --------------------------------------------------------------------------- filtre HR
 def hr_band(K_all, slope=3.3, height=0.8):

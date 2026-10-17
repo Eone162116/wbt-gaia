@@ -269,3 +269,82 @@
  "unblinded_utc": "2026-10-17T06:47:30Z",
  "freeze_manifest": "77d121dce888798e4be4716233d01e3434f3d986e26200639f1f25cbead774eb"
 }
+08:57:30 2877863 étoiles, 241942 liens, 100949 paires mutuelles ; crible DR4 étoile : 1.000
+08:57:32 crible par époques absent (étape epoch non lancée ou DR3) : ignoré
+08:57:32 [AVEUGLE] spécification principale : N = 1189 (cible 2000, minimum 1000) ; HR intercept 1.861 ; r/rM : 567 bas, 155 hauts
+08:57:32 [AVEUGLE] médianes binées (permutées, sans information physique) : [{'lo': 0.1, 'hi': 0.2, 'n': 332, 'med': 0.515}, {'lo': 0.2, 'hi': 0.5, 'n': 492, 'med': 0.533}, {'lo': 0.5, 'hi': 1.0, 'n': 210, 'med': 0.588}, {'lo': 1.0, 'hi': 2.0, 'n': 106, 'med': 0.476}, {'lo': 2.0, 'hi': 6.0, 'n': 49, 'med': 0.465}]
+08:57:32 [AVEUGLE] S permuté = -0.086 (attendu ≈ 0)
+08:57:53 calibration : 5000 simulations (21 s) ; S Newton +0.007 ± 0.065 ; S MOND +0.151 ± 0.072 ; séparation attendue 2.2 σ
+08:57:53 f_in mesuré (drapeau dr3, sans vitesses) : taux signalé 0.229 ± 0.009 sur 2016 paires candidates ; raghavan2010 0.22–0.38 ; mdwarf_pokemon 0.14–0.23
+08:59:45 enveloppe de contamination (dr3_ruwe+image_pess, 113 s) : S newtonien moyen : mdwarf_p 0.14 → +0.006, mdwarf_p 0.19 → +0.008, mdwarf_p 0.23 → +0.008, raghavan 0.22 → +0.015, raghavan 0.30 → +0.020, raghavan 0.38 → +0.024 ; séparation MOND vs pire Newton : 2.0 σ
+08:59:47 gel enregistré : 2026-10-17T06:59:47Z manifeste 082324ca7425e906
+08:59:50 [LEVÉE] {
+ "S_obs": 0.07863930893847049,
+ "p_newton": 0.26873126873126874,
+ "p_newton_gauss": 0.2645646579417593,
+ "p_newton_pur": 0.131373725254949,
+ "p_mond": 0.15896820635872824,
+ "p_mond_gauss": 0.15781607224216698,
+ "S_newton_mean": 0.007070969240531449,
+ "S_newton_env_max": 0.02382723839484418,
+ "S_mond_mean": 0.15118780547188104,
+ "sigma_S": 0.06461672636021182,
+ "separation_sigma": 2.1019114136191104,
+ "separation_sigma_env": 1.8575250233393161,
+ "envelope": [
+  {
+   "shape": "mdwarf_pokemon",
+   "f_in": 0.1400860561004267,
+   "S_mean": 0.005600734381002409,
+   "S_sd": 0.0709678993886148,
+   "p": 0.14385614385614387,
+   "p_gauss": 0.15169810590224897
+  },
+  {
+   "shape": "mdwarf_pokemon",
+   "f_in": 0.1875380170945392,
+   "S_mean": 0.008491282077512605,
+   "S_sd": 0.07469455520331489,
+   "p": 0.16883116883116883,
+   "p_gauss": 0.17383155750274998
+  },
+  {
+   "shape": "mdwarf_pokemon",
+   "f_in": 0.2338055724110337,
+   "S_mean": 0.007872577860511517,
+   "S_sd": 0.08022514306650425,
+   "p": 0.1878121878121878,
+   "p_gauss": 0.18886091998987836
+  },
+  {
+   "shape": "raghavan2010",
+   "f_in": 0.224839588364561,
+   "S_mean": 0.014687341060132546,
+   "S_sd": 0.07603506886268882,
+   "p": 0.2007992007992008,
+   "p_gauss": 0.20015011470989158
+  },
+  {
+   "shape": "raghavan2010",
+   "f_in": 0.3010085378798128,
+   "S_mean": 0.020056516140231465,
+   "S_sd": 0.08166331248606022,
+   "p": 0.23476523476523475,
+   "p_gauss": 0.23657297949423872
+  },
+  {
+   "shape": "raghavan2010",
+   "f_in": 0.3752807858072353,
+   "S_mean": 0.02382723839484418,
+   "S_sd": 0.08709512605187254,
+   "p": 0.26873126873126874,
+   "p_gauss": 0.2645646579417593
+  }
+ ],
+ "verdict": "Non concluant",
+ "N": 1189,
+ "binned_log10_newton_over_mond": 0.6692543639227049,
+ "unblinded_utc": "2026-10-17T06:59:50Z",
+ "freeze_manifest": "082324ca7425e9063a81213a4c57a2b1448a028ac0a11fd86716202b02e244ed"
+}
+08:59:52 multivers : 108 spécifications ; S médian +0.073 ; part S > +0,075 : 0.44

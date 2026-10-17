@@ -5,6 +5,7 @@ N'utilise que la géométrie, les masses, les magnitudes et les incertitudes : j
 (utilisable avant la levée de l'aveuglement). Validation et justification : validation_contamination/."""
 import os, numpy as np
 from scipy.interpolate import RegularGridInterpolator
+from wbt_pipeline import observe
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _AX = (np.linspace(-2.5, 2.5, 21), np.linspace(-2.5, 4.0, 21))
@@ -85,7 +86,7 @@ def contaminated_newton(geo, f_in, rng, cfg, vtmax, dvsky, kepler_geometry):
                 p_img = (vis & (rho > 0.15)).astype(float)
             det |= rng.random(len(i)) < p_img
         removed[i[det]] = True
-    v = v*np.sqrt(1 + M_hidden/geo["M"])[:, None] + kick + rng.normal(0, 1, (N, 2))*geo["sv"][:, None]
+    v = observe(v*np.sqrt(1 + M_hidden/geo["M"])[:, None] + kick, geo["sv"], rng)
     va = np.linalg.norm(v, axis=1); vt = va/geo["vc"]
     keep = (vt < vtmax) & (va < dvsky) & ~removed
     return geo["x"][keep], vt[keep]

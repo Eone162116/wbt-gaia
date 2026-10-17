@@ -1,23 +1,23 @@
 {
-  "frozen_at_utc": "2026-10-17T06:47:25Z",
+  "frozen_at_utc": "2026-10-17T06:59:47Z",
   "files": {
-    "wbt_pipeline.py": "e943f0db42151ba8857172a66143ae462e711dde63a35f93ca4323b9f58ca244",
-    "calibrate.py": "e49fa881663fecb6677498db2a27a1116c49210e955f2131a9089d5679e2b8b3",
+    "wbt_pipeline.py": "02d31f513123f64399576cb0a2af82fd3b564c9ecf33798b425bc28d457742f4",
+    "calibrate.py": "454489313e763d785831a0056f13f7d311a679aafa8efc92ac41303dc9cd0f92",
     "blind.py": "ac581a29eaf183497dc08107ea8144483dc5ab263391ce9a5ca6f3bb5e97b504",
-    "run_wbt.py": "13930b2caa2f9554c607197744ea46af4351a64f49deb8bb6695439ae22f8342",
+    "run_wbt.py": "70509359763379b9764d0e47c7833d0e383c8467cf94bdd916b8a9b173920411",
     "fetch_gaia.py": "0e794bc337d921e17a29ff807c616577cbf014365a8c6d53fa9fe108944636ab",
     "epoch_accel.py": "a6ed8cca4f5bfb0fb7f39d9993217f8f1a37fc5eb295c8326feef379706c7fff",
-    "contamination.py": "ea35db6026ca151a9a1ba7b4fec34dd9c0deba23ab04ebab7715316edff91d46",
+    "contamination.py": "c49fab7cee8ef228846aa2d9bd3510867f8441435fd50a28a00751af13d246be",
     "finfer.py": "54c0a3d6c9da2e164a24eadb79d8e698f4eec1883c27edbaa604e6503928086c",
     "validation_contamination/pgrid.npy": "8bb4ebefaf8b581b2f71adcf01ea6141b85380068bd78f25ee5c246262b5b6c0",
     "validation_contamination/pgrid_dr3.npy": "54dff79c0354bc4fbcea00b50818aeb01316527b70fb80f2721e3507989c255c",
     "config_prereg.json": "f6c525e02e104d0711bf94790bc5ca0cd8ccb20cb7b51893cf24c00c680819c6",
-    "mocks_dr3.csv": "c9a6c980b50a26103de04a71da8edfadd4d8a78de6314d66116db673213d56db",
-    "envelope_dr3.csv": "c1280c5f70a13364c03d6afe0ea6674acf0ea44e4fe4287fb6e5a83b3db76c77",
-    "finfer_dr3.csv": "fe02a5cb71e95dc3c65b7010e23463ca2fcfc3b5824407073e0cefbd2a704a59"
+    "mocks_dr3.csv": "3761bd2a25b7c1e9da84b562503f5feb2f8a17a3eb18ccb0bfe29c99b6a98188",
+    "envelope_dr3.csv": "6fc931e1ff725a3cfc2e547398b87dbff04598840f642dad9f9d3aea91ca4876",
+    "finfer_dr3.csv": "028af47e1545d915538a29bb02db77a124288edab1b4b7f42ae680d617a50d10"
   },
   "arrays": {
-    "sample_ids": "270252d193c09ec38afd57a154c442f34ed2694315a8ec25ea8d5a17a8de1381"
+    "sample_ids": "bf36fc0dc8109142d3f61c58b96458ad2099e2e2d8daf01f48ed1d0986651bbe"
   },
-  "manifest_sha256": "77d121dce888798e4be4716233d01e3434f3d986e26200639f1f25cbead774eb"
+  "manifest_sha256": "082324ca7425e9063a81213a4c57a2b1448a028ac0a11fd86716202b02e244ed"
 }
