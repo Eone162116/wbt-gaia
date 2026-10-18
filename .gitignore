@@ -9,3 +9,4 @@ __pycache__/
 !validation_contamination/*.csv
 !validation_calibration/*.csv
 !validation_eccentricity/*.csv
+!validation_joint/*.csv
