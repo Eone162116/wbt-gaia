@@ -1,0 +1,8 @@
+gabarits (181 s)
+
+complet (ṽ < 2,5) : séparation MOND−Newton = 2.20σ (σ_N 4.7, σ_M 4.9) ; biais f_in 0,5 sous Newton = +0.81σ ; influence max d'une paire, 90e centile (20 jeux) = 1.52
+  part de la séparation (E_MOND − E_Newton des contributions) par tranche de log ṽ, zone haute : <-0,6 +0.4 ; -0,6..-0,3 +0.8 ; -0,3..0 +1.3 ; 0..0,15 +5.0 ; 0,15..0,25 +0.3 ; >0,25 +0.0 ; zone basse +2.8 ; total +10.5
+
+tronqué (ṽ < √2) : séparation MOND−Newton = 2.24σ (σ_N 4.6, σ_M 4.6) ; biais f_in 0,5 sous Newton = +0.93σ ; influence max d'une paire, 90e centile (20 jeux) = 2.06
+  part de la séparation (E_MOND − E_Newton des contributions) par tranche de log ṽ, zone haute : <-0,6 +0.8 ; -0,6..-0,3 +1.2 ; -0,3..0 +1.5 ; 0..0,15 +4.8 ; 0,15..0,25 +0.0 ; >0,25 +0.0 ; zone basse +2.1 ; total +10.3
+(191 s)
