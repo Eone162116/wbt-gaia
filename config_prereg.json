@@ -136,7 +136,12 @@
       ],
       "bande": "±2σ (Δ ln L = 2), grille α de 0 à 3 par pas de 0,25"
     },
-    "_comment_v08": "Excentricité mesurée par les angles v–r sur l'échantillon (eccfit.py), à l'étape aveugle. Scénarios : central, le plus favorable à Newton (S maximal) et le plus favorable à MOND (S minimal). Les scénarios fixes ecc_scenarios ne servent qu'en mode 'fixe'."
+    "_comment_v08": "Excentricité mesurée par les angles v–r sur l'échantillon (eccfit.py), à l'étape aveugle. Scénarios : central, le plus favorable à Newton (S maximal) et le plus favorable à MOND (S minimal). Les scénarios fixes ecc_scenarios ne servent qu'en mode 'fixe'.",
+    "joint": {
+      "R_templates": 30,
+      "n_par_scenario": 5000,
+      "_comment": "Gabarits 2D (log ṽ, ψ) par zone, α profilé par zone, contamination et échelle globale η profilées ; scénarios de calibration : Newton (central ; plus favorable, f_in haut), MOND (central ; plus favorable, f_in nul ou haut)."
+    }
   },
   "decision": {
     "p_threshold": 0.00135,
@@ -144,7 +149,16 @@
     "n_target": 2000,
     "null_newton": "enveloppe_max",
     "p_rule": "borne haute Clopper-Pearson 95 % ET approximation gaussienne < p_threshold",
-    "n_min_per_zone": 100
+    "n_min_per_zone": 100,
+    "primary_test": "conjoint",
+    "promotion": {
+      "regle": "gain de probabilité d'un verdict tranché à ≈ 2400 paires ≥ +0,10 ET biais de robustesse < 0,5σ, fixée le 18/10/2026 avant tout calcul de Λ sur données réelles",
+      "resultat_dr3": {
+        "gain": 0.12,
+        "biais_max_sigma": 0.38
+      },
+      "etude": "validation_joint/promotion_study.py"
+    }
   },
   "multiverse": {
     "degroup": [

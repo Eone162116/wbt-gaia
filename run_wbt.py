@@ -20,6 +20,7 @@ def frozen_files():
     return (CODE + [f"mocks_{REL}.csv", f"envelope_{REL}.csv"] + ([f"finfer_{REL}.csv"] if mes else [])
             + [f"K_{REL}.pkl", f"sample_{REL}.csv", f"CONTROLS_{REL}_aveugle.json"]      # v0.7-D : données analysées et contrôles
             + ([f"eccfit_{REL}.csv", "eccfit.py"] if CFG["calibration"].get("ecc_mode") == "mesure" else [])   # v0.8
+            + ([f"joint_{REL}.npz", f"joint_mocks_{REL}.csv", "jointlik.py"] if CFG["calibration"].get("joint") else [])   # v0.9
             + ([f"epoch_stats_{REL}.csv"] if REL == "dr4" else []))
 pattern = f"{REL}_*.csv" if glob.glob(f"{REL}_*.csv") else "s40_*.csv"      # s40_* = tranches DR3 de développement
 
@@ -180,6 +181,34 @@ if STAGE in ("blind", "all"):
     else:
         ctrl["f_in_comparaison"] = "non applicable (un seul drapeau disponible)"
     json.dump(ctrl, open(f"CONTROLS_{REL}_aveugle.json", "w", encoding="utf-8", newline="\n"), indent=2, default=float, ensure_ascii=False)
+    if C.get("joint"):                      # v0.9 : test conjoint, gabarits et calibration de Λ (simulation seulement)
+        import jointlik as jl
+        JC = C["joint"]; t3 = time.time(); rng_j = np.random.default_rng(C["seed"] + 9)
+        grid_j = "dr3" if CC["screen"].startswith("dr3") else "dr4"
+        zs = {"bas": np.where(x < ST["x_low"])[0], "haut": np.where(x > ST["x_high"])[0]}
+        if C.get("ecc_mode") == "mesure":
+            a_c, b_c = ecc_sc["mes_central"]["x"], ecc_sc["mes_central"].get("beta", (1.0, 1.0))
+            a_pn, b_pn = ecc_sc["mes_pire_newton"]["x"], ecc_sc["mes_pire_newton"].get("beta", (1.0, 1.0))
+            a_pm, b_pm = ecc_sc["mes_pire_mond"]["x"], ecc_sc["mes_pire_mond"].get("beta", (1.0, 1.0))
+        else:
+            a_c = a_pn = a_pm = b_c = b_pn = b_pm = (1.0, 1.0)
+        fb = band if CC.get("f_in_mode") == "mesure" else {"raghavan2010": (0.0, 0.3, 0.5)}
+        sh0 = "raghavan2010" if "raghavan2010" in fb else list(fb)[0]
+        cont = [(sh0, 0.0)] + [(sh, fb[sh][1]) for sh in fb] + [(sh0, fb[sh0][2])]
+        Tj = jl.templates(geo, zs, b_c, cont, CC, rng_j, JC["R_templates"]//(2 if quick else 1), P["vtmax"], P["dvsky"], grid_j)
+        nJ = JC["n_par_scenario"]//(10 if quick else 1)
+        scen_j = [("newton", "central", a_c, b_c, fb[sh0][1]), ("newton", "pire_newton_f_haut", a_pn, b_pn, fb[sh0][2]),
+                  ("mond", "central", a_c, b_c, fb[sh0][1]), ("mond", "pire_mond_f0", a_pm, b_pm, 0.0), ("mond", "pire_mond_f_haut", a_pm, b_pm, fb[sh0][2])]
+        rows_j = []
+        for hyp, lab, a_, b_, f_ in scen_j:
+            for _ in range(nJ):
+                lv_, ps_, k_ = jl.simulate_obs(geo, a_, b_, int(hyp == "mond"), f_, sh0, CC, rng_j, P["vtmax"], P["dvsky"], grid=grid_j)
+                rows_j.append((hyp, lab, jl.lam(lv_, ps_, k_, zs, Tj)))
+        Jm = pd.DataFrame(rows_j, columns=["hyp", "scenario", "lam"]); Jm.to_csv(f"joint_mocks_{REL}.csv", index=False)
+        np.savez(f"joint_{REL}.npz", T=Tj, cont=np.array([f"{s_}:{v_}" for s_, v_ in cont]))
+        gj = Jm.groupby(["hyp", "scenario"]).lam
+        log(f"test conjoint ({time.time()-t3:.0f} s, {nJ} simulations par scénario) : Λ moyen ± σ "
+            + ", ".join(f"{h}/{s_} {gj.mean()[(h, s_)]:+.1f} ± {gj.std()[(h, s_)]:.1f}" for h, s_ in gj.mean().index))
     log("contrôles avant levée : " + " ; ".join(f"{k} {'OK' if isinstance(v, dict) and v.get('ok', v.get('recouvrement', True)) else ('—' if isinstance(v, str) else 'ÉCHEC')}" for k, v in ctrl.items()))
 
 def frozen_arrays():
@@ -203,6 +232,23 @@ if STAGE == "unblind":
     if res["N"] < CFG["decision"]["n_min_powered"]: res["verdict"] += " — étude déclarée sous-dimensionnée"
     nlo, nhi = int((x < ST["x_low"]).sum()), int((x > ST["x_high"]).sum()); res.update(n_bas=nlo, n_haut=nhi)
     if min(nlo, nhi) < CFG["decision"].get("n_min_per_zone", 0): res["verdict"] += " — zone de x sous-dimensionnée"
+    if CFG["calibration"].get("joint"):      # v0.9 : test conjoint, Λ observé calculé une seule fois
+        import jointlik as jl
+        Tj = np.load(f"joint_{REL}.npz")["T"]; Jm = pd.read_csv(f"joint_mocks_{REL}.csv")
+        zs = {"bas": np.where(x < ST["x_low"])[0], "haut": np.where(x > ST["x_high"])[0]}
+        lam_obs = jl.lam(np.log10(v), K.psi.values[m], np.ones(len(x), bool), zs, Tj)
+        J = pd.DataFrame([dict(hyp=h, scenario=s_, **cal._tail(g_.lam.values, lam_obs, "upper" if h == "newton" else "lower"))
+                          for (h, s_), g_ in Jm.groupby(["hyp", "scenario"])])
+        jn, jm = J[J.hyp == "newton"], J[J.hyp == "mond"]; thr = CFG["decision"]["p_threshold"]
+        nrej = jn.p_cp95.max() < thr and jn.p_gauss.max() < thr; mrej = jm.p_cp95.max() < thr and jm.p_gauss.max() < thr
+        vj = ("MOND rejeté dans tous ses scénarios (Newton favorisé)" if mrej and not nrej else
+              "Newton rejeté dans tous ses scénarios (MOND favorisé)" if nrej and not mrej else
+              "Les deux rejetés (ni Newton ni MOND : systématique ou autre physique)" if nrej and mrej else "Non concluant")
+        res["conjoint"] = dict(lam_obs=lam_obs, p_newton_cp95=float(jn.p_cp95.max()), p_newton_gauss=float(jn.p_gauss.max()),
+                               p_mond_cp95=float(jm.p_cp95.max()), p_mond_gauss=float(jm.p_gauss.max()), verdict=vj, scenarios=J.to_dict("records"))
+        if CFG["decision"].get("primary_test") == "conjoint":
+            suffix = res["verdict"][len(res["verdict"].split(" — ")[0]):]
+            res["verdict_S"] = res["verdict"]; res["verdict"] = vj + suffix; res["test_principal"] = "conjoint"
     # v0.7-D : contrôle en régime newtonien (forte accélération, x < 0,3), attendu proche de zéro sous les deux hypothèses
     def _s_newt(xx, vv):
         lo, hi = vv[xx < 0.15], vv[(xx >= 0.15) & (xx < 0.3)]

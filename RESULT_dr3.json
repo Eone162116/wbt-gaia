@@ -172,10 +172,77 @@
   "verdict": "Non concluant",
   "N": 1189,
   "binned_log10_newton_over_mond": 0.6692543639227049,
-  "unblinded_utc": "2026-10-18T05:55:54Z",
-  "freeze_manifest": "194c9660dd20c3a10a05c641f957b6473a532aa3f2a58e7d7d0cd042ec19d6b9",
+  "unblinded_utc": "2026-10-18T13:07:08Z",
+  "freeze_manifest": "bd2e4592bf73886525e6544712ca2153dd0abf634dea62ab25c74888bba04293",
   "n_bas": 567,
   "n_haut": 155,
+  "conjoint": {
+    "lam_obs": -15.420500895390433,
+    "p_newton_cp95": 0.986094610671322,
+    "p_newton_gauss": 0.974703112022445,
+    "p_mond_cp95": 0.09620286083712486,
+    "p_mond_gauss": 0.0850169743062762,
+    "verdict": "Non concluant",
+    "scenarios": [
+      {
+        "hyp": "mond",
+        "scenario": "central",
+        "k": 3,
+        "N": 500,
+        "p": 0.006,
+        "p_cp95": 0.015433734876752685,
+        "p_gauss": 0.004088428450014379,
+        "S_mean": 7.452891475817188,
+        "S_sd": 8.648836696998378
+      },
+      {
+        "hyp": "mond",
+        "scenario": "pire_mond_f0",
+        "k": 37,
+        "N": 500,
+        "p": 0.074,
+        "p_cp95": 0.09620286083712486,
+        "p_gauss": 0.0850169743062762,
+        "S_mean": -0.4694449398825909,
+        "S_sd": 10.89651872101238
+      },
+      {
+        "hyp": "mond",
+        "scenario": "pire_mond_f_haut",
+        "k": 0,
+        "N": 500,
+        "p": 0.0,
+        "p_cp95": 0.005973551516349557,
+        "p_gauss": 0.001317112030639882,
+        "S_mean": 2.6449129115911982,
+        "S_sd": 6.006825155544177
+      },
+      {
+        "hyp": "newton",
+        "scenario": "central",
+        "k": 468,
+        "N": 500,
+        "p": 0.936,
+        "p_cp95": 0.9530380381460897,
+        "p_gauss": 0.9349954340022318,
+        "S_mean": -4.0491271576877494,
+        "S_sd": 7.510488088300523
+      },
+      {
+        "hyp": "newton",
+        "scenario": "pire_newton_f_haut",
+        "k": 488,
+        "N": 500,
+        "p": 0.976,
+        "p_cp95": 0.986094610671322,
+        "p_gauss": 0.974703112022445,
+        "S_mean": -1.3414050807363118,
+        "S_sd": 7.201917639200093
+      }
+    ]
+  },
+  "verdict_S": "Non concluant",
+  "test_principal": "conjoint",
   "controles": {
     "avant_levee": {
       "permutation": {

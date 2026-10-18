@@ -1358,3 +1358,296 @@
  }
 }
 07:56:02 multivers : 108 spécifications ; S médian +0.073 ; part S > +0,075 : 0.44
+14:53:06 crible par époques absent (DR3, répétition) : ignoré
+14:53:06 [AVEUGLE] spécification principale : N = 1189 (cible 2000, minimum 1000) ; HR intercept 1.861 ; r/rM : 567 bas, 155 hauts
+14:53:06 [AVEUGLE] médianes binées (permutées, sans information physique) : [{'lo': 0.1, 'hi': 0.2, 'n': 332, 'med': 0.515}, {'lo': 0.2, 'hi': 0.5, 'n': 492, 'med': 0.533}, {'lo': 0.5, 'hi': 1.0, 'n': 210, 'med': 0.588}, {'lo': 1.0, 'hi': 2.0, 'n': 106, 'med': 0.476}, {'lo': 2.0, 'hi': 6.0, 'n': 49, 'med': 0.465}]
+14:53:06 [AVEUGLE] S permuté = -0.086 (attendu ≈ 0)
+14:53:06 MODE RAPIDE (WBT_QUICK=1) : simulations divisées par 10, répétition seulement
+14:53:06 effectifs par zone : x < 0.3 : 567 ; x > 1.0 : 155
+14:53:08 pente des demi-grands axes (séparations projetées, sans vitesses) : β(x < 0.3) = 1.43 [1.07 ; 1.79] ; β(x > 1.0) = 2.14 [1.64 ; 2.66]
+14:53:08 excentricité mesurée (angles v–r, sans |ṽ|) : α(x < 0.3) = 2.00 [1.25 ; 2.70] ; α(x > 1.0) = 0.25 [0.00 ; 1.31] ; scénarios : mes_central (2.0, 0.25), mes_pire_newton (2.7, 0.0), mes_pire_mond (1.35, 1.1)
+14:59:39 calibration : 5000 simulations par colonne (393 s) ; newton +0.006 ± 0.063, mond +0.151 ± 0.073, newton_mes_central +0.130 ± 0.068, mond_mes_central +0.297 ± 0.077, newton_mes_pire_newton +0.254 ± 0.071, mond_mes_pire_newton +0.444 ± 0.081, newton_mes_pire_mond -0.051 ± 0.060, mond_mes_pire_mond +0.086 ± 0.067
+14:59:39 f_in mesuré (drapeau dr3, sans vitesses) : taux signalé 0.229 ± 0.009 sur 2016 paires candidates ; raghavan2010 0.22–0.38 ; mdwarf_pokemon 0.14–0.23
+15:05:24 enveloppe de contamination (dr3_ruwe+image_pess, 346 s) : S newtonien moyen : mdwarf_p 0.14 → +0.239, mdwarf_p 0.19 → +0.233, mdwarf_p 0.23 → +0.228, raghavan 0.22 → +0.235, raghavan 0.30 → +0.234, raghavan 0.38 → +0.225 ; séparation pire MOND vs pire Newton : -2.4 σ
+15:07:00 test conjoint (95 s, 500 simulations par scénario) : Λ moyen ± σ mond/central +7.5 ± 8.7, mond/pire_mond_f0 -0.5 ± 10.9, mond/pire_mond_f_haut +2.6 ± 6.0, newton/central -4.0 ± 7.5, newton/pire_newton_f_haut -1.3 ± 7.2
+15:07:00 contrôles avant levée : permutation OK ; injection OK ; effectifs OK ; f_in_comparaison —
+15:07:04 gel enregistré : 2026-10-18T13:07:04Z manifeste bd2e4592bf738865
+15:07:15 [LEVÉE] {
+ "S_obs": 0.07863930893847049,
+ "p_newton_cp95": 0.9973475444257992,
+ "p_newton_gauss": 0.9935243240212753,
+ "p_newton_pur": 0.1312,
+ "p_mond_cp95": 0.48031928880685315,
+ "p_mond_gauss": 0.4553401933508418,
+ "p_mond_thermique": 0.1604,
+ "S_newton_mean": 0.006493969448166219,
+ "S_newton_max": 0.254265397307002,
+ "S_mond_mean": 0.15058480591027168,
+ "S_mond_min": 0.08614803700656552,
+ "sigma_S": 0.06288272204334236,
+ "separation_sigma": 2.126406592202476,
+ "separation_sigma_pire": -2.4809756954984596,
+ "scenarios": [
+  {
+   "hyp": "newton",
+   "scenario": "pur_thermique",
+   "k": 656,
+   "N": 5000,
+   "p": 0.1312,
+   "p_cp95": 0.13931321034443556,
+   "p_gauss": 0.12562885168420646,
+   "S_mean": 0.006493969448166219,
+   "S_sd": 0.06288272204334236
+  },
+  {
+   "hyp": "newton",
+   "scenario": "contamination_mdwarf_pokemon_0.14",
+   "k": 1962,
+   "N": 2000,
+   "p": 0.981,
+   "p_cp95": 0.9857394678908359,
+   "p_gauss": 0.9796529652407877,
+   "S_mean": 0.23920726474908025,
+   "S_sd": 0.07845466469569265
+  },
+  {
+   "hyp": "newton",
+   "scenario": "contamination_mdwarf_pokemon_0.188",
+   "k": 1943,
+   "N": 2000,
+   "p": 0.9715,
+   "p_cp95": 0.9773505242825324,
+   "p_gauss": 0.968795011064437,
+   "S_mean": 0.2333623557414276,
+   "S_sd": 0.08303391124630823
+  },
+  {
+   "hyp": "newton",
+   "scenario": "contamination_mdwarf_pokemon_0.234",
+   "k": 1918,
+   "N": 2000,
+   "p": 0.959,
+   "p_cp95": 0.9660384350543764,
+   "p_gauss": 0.9573709553797354,
+   "S_mean": 0.2276253649668726,
+   "S_sd": 0.08657148289104886
+  },
+  {
+   "hyp": "newton",
+   "scenario": "contamination_raghavan2010_0.225",
+   "k": 1941,
+   "N": 2000,
+   "p": 0.9705,
+   "p_cp95": 0.9764549925756273,
+   "p_gauss": 0.9729377546504637,
+   "S_mean": 0.23549314237079932,
+   "S_sd": 0.08144701626435812
+  },
+  {
+   "hyp": "newton",
+   "scenario": "contamination_raghavan2010_0.301",
+   "k": 1934,
+   "N": 2000,
+   "p": 0.967,
+   "p_cp95": 0.9733061825300773,
+   "p_gauss": 0.9616472630231737,
+   "S_mean": 0.23431491338483162,
+   "S_sd": 0.08794585570729005
+  },
+  {
+   "hyp": "newton",
+   "scenario": "contamination_raghavan2010_0.375",
+   "k": 1894,
+   "N": 2000,
+   "p": 0.947,
+   "p_cp95": 0.9549989018887869,
+   "p_gauss": 0.9470036642948195,
+   "S_mean": 0.22542108175912107,
+   "S_sd": 0.09080387900356934
+  },
+  {
+   "hyp": "mond",
+   "scenario": "thermique",
+   "k": 802,
+   "N": 5000,
+   "p": 0.1604,
+   "p_cp95": 0.16918291517823256,
+   "p_gauss": 0.16098801289532055,
+   "S_mean": 0.15058480591027168,
+   "S_sd": 0.07264247524534734
+  },
+  {
+   "hyp": "newton",
+   "scenario": "mes_central",
+   "k": 3886,
+   "N": 5000,
+   "p": 0.7772,
+   "p_cp95": 0.786858414654012,
+   "p_gauss": 0.7747162864396269,
+   "S_mean": 0.12978163178913932,
+   "S_sd": 0.06778581670114865
+  },
+  {
+   "hyp": "mond",
+   "scenario": "mes_central",
+   "k": 7,
+   "N": 5000,
+   "p": 0.0014,
+   "p_cp95": 0.002628006196476873,
+   "p_gauss": 0.0022998085719878954,
+   "S_mean": 0.2973988258484394,
+   "S_sd": 0.07719615960316552
+  },
+  {
+   "hyp": "newton",
+   "scenario": "mes_pire_newton",
+   "k": 4980,
+   "N": 5000,
+   "p": 0.996,
+   "p_cp95": 0.9973475444257992,
+   "p_gauss": 0.9935243240212753,
+   "S_mean": 0.254265397307002,
+   "S_sd": 0.07067151891747084
+  },
+  {
+   "hyp": "mond",
+   "scenario": "mes_pire_newton",
+   "k": 0,
+   "N": 5000,
+   "p": 0.0,
+   "p_cp95": 0.0005989670023149134,
+   "p_gauss": 3.511853770645093e-06,
+   "S_mean": 0.44361666990459614,
+   "S_sd": 0.08123300573195302
+  },
+  {
+   "hyp": "newton",
+   "scenario": "mes_pire_mond",
+   "k": 82,
+   "N": 5000,
+   "p": 0.0164,
+   "p_cp95": 0.019673718989289102,
+   "p_gauss": 0.01489020550280788,
+   "S_mean": -0.05128919319045321,
+   "S_sd": 0.05979225797701507
+  },
+  {
+   "hyp": "mond",
+   "scenario": "mes_pire_mond",
+   "k": 2343,
+   "N": 5000,
+   "p": 0.4686,
+   "p_cp95": 0.48031928880685315,
+   "p_gauss": 0.4553401933508418,
+   "S_mean": 0.08614803700656552,
+   "S_sd": 0.06693441556557217
+  }
+ ],
+ "verdict": "Non concluant",
+ "N": 1189,
+ "binned_log10_newton_over_mond": 0.6692543639227049,
+ "unblinded_utc": "2026-10-18T13:07:08Z",
+ "freeze_manifest": "bd2e4592bf73886525e6544712ca2153dd0abf634dea62ab25c74888bba04293",
+ "n_bas": 567,
+ "n_haut": 155,
+ "conjoint": {
+  "lam_obs": -15.420500895390433,
+  "p_newton_cp95": 0.986094610671322,
+  "p_newton_gauss": 0.974703112022445,
+  "p_mond_cp95": 0.09620286083712486,
+  "p_mond_gauss": 0.0850169743062762,
+  "verdict": "Non concluant",
+  "scenarios": [
+   {
+    "hyp": "mond",
+    "scenario": "central",
+    "k": 3,
+    "N": 500,
+    "p": 0.006,
+    "p_cp95": 0.015433734876752685,
+    "p_gauss": 0.004088428450014379,
+    "S_mean": 7.452891475817188,
+    "S_sd": 8.648836696998378
+   },
+   {
+    "hyp": "mond",
+    "scenario": "pire_mond_f0",
+    "k": 37,
+    "N": 500,
+    "p": 0.074,
+    "p_cp95": 0.09620286083712486,
+    "p_gauss": 0.0850169743062762,
+    "S_mean": -0.4694449398825909,
+    "S_sd": 10.89651872101238
+   },
+   {
+    "hyp": "mond",
+    "scenario": "pire_mond_f_haut",
+    "k": 0,
+    "N": 500,
+    "p": 0.0,
+    "p_cp95": 0.005973551516349557,
+    "p_gauss": 0.001317112030639882,
+    "S_mean": 2.6449129115911982,
+    "S_sd": 6.006825155544177
+   },
+   {
+    "hyp": "newton",
+    "scenario": "central",
+    "k": 468,
+    "N": 500,
+    "p": 0.936,
+    "p_cp95": 0.9530380381460897,
+    "p_gauss": 0.9349954340022318,
+    "S_mean": -4.0491271576877494,
+    "S_sd": 7.510488088300523
+   },
+   {
+    "hyp": "newton",
+    "scenario": "pire_newton_f_haut",
+    "k": 488,
+    "N": 500,
+    "p": 0.976,
+    "p_cp95": 0.986094610671322,
+    "p_gauss": 0.974703112022445,
+    "S_mean": -1.3414050807363118,
+    "S_sd": 7.201917639200093
+   }
+  ]
+ },
+ "verdict_S": "Non concluant",
+ "test_principal": "conjoint",
+ "controles": {
+  "avant_levee": {
+   "permutation": {
+    "S_aveugle": -0.08573499162158138,
+    "moyenne_permutations": -0.00016704842003193953,
+    "ecart_type": 0.07311202804088565,
+    "z": -1.170367523572157,
+    "ok": true
+   },
+   "injection": {
+    "S_newton_moyen": 0.006493969448166223,
+    "S_mond_moyen": 0.15058480591027168,
+    "ok": true
+   },
+   "effectifs": {
+    "n_bas": 567,
+    "n_haut": 155,
+    "ok": true
+   },
+   "f_in_comparaison": "non applicable (un seul drapeau disponible)"
+  },
+  "a_la_levee": {
+   "regime_newtonien": {
+    "S_obs": -0.05102634391432992,
+    "attendu_newton": 0.0035640750226743514,
+    "attendu_mond": 0.020026254382016634,
+    "ecart_type": 0.06878345615325537,
+    "z": -0.7936562363974876,
+    "ok": true
+   }
+  }
+ }
+}
+15:07:19 multivers : 108 spécifications ; S médian +0.073 ; part S > +0,075 : 0.44
