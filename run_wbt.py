@@ -105,9 +105,21 @@ if STAGE in ("blind", "all"):
         rng_e = np.random.default_rng(C["seed"] + 7); Re = C["ecc_fit"]["R"]//(2 if quick else 1)
         bN = ef.measure(S.psi.values, x, vc, sv, rng_e, "newton", Re, P["vtmax"], P["dvsky"])
         bM = ef.measure(S.psi.values, x, vc, sv, rng_e, "mond", Re, P["vtmax"], P["dvsky"])
-        ecc_sc = ef.scenarios(bN, bM); ecc_env = ecc_sc["mes_pire_newton"]
-        pd.DataFrame([dict(gabarits=h, zone=z, alpha_min=b[z][0], alpha=b[z][1], alpha_max=b[z][2], n=b["n_" + z])
-                      for h, b in (("newton", bN), ("mond", bM)) for z in ("bas", "haut")]).to_csv(f"eccfit_{REL}.csv", index=False)
+        # v0.8.1 : pente des demi-grands axes, mesurée sur les séparations projetées des paires candidates (sans vitesses)
+        mcb, _ = select(K, (b, hr_band(K)[1], P["hr_height"]), dmax=P["dmax"], smin=500, smax=60000, svt=P["svt"], sph=True, hr=P["hr"],
+                        ipd=P["ipd"], ruwe=P["ruwe"], degroup=P["degroup"], screen=P["screen"], epoch=P.get("epoch", False),
+                        vtmax=1e9, dvsky=1e9, drv=1e9)
+        s_all = K.rsky.values[mcb]; rs_ = S.rsky.values
+        zr = {"bas": np.quantile(rs_[x < ST["x_low"]], [0.05, 0.95]), "haut": np.quantile(rs_[x > ST["x_high"]], [0.05, 0.95])}
+        bB = {z: ef.beta_fit(s_all, *zr[z]) for z in zr}
+        ecc_sc = ef.scenarios(bN, bM, bB); ecc_env = ecc_sc["mes_pire_newton"]
+        rows_ = [dict(gabarits=h, zone=z, alpha_min=bb[z][0], alpha=bb[z][1], alpha_max=bb[z][2], n=bb["n_" + z])
+                 for h, bb in (("newton", bN), ("mond", bM)) for z in ("bas", "haut")]
+        rows_ += [dict(gabarits="beta_separations", zone=z, alpha_min=bB[z][0], alpha=bB[z][1], alpha_max=bB[z][2],
+                       n=int(((s_all >= zr[z][0]) & (s_all < zr[z][1])).sum())) for z in zr]
+        pd.DataFrame(rows_).to_csv(f"eccfit_{REL}.csv", index=False)
+        log(f"pente des demi-grands axes (séparations projetées, sans vitesses) : β(x < {ST['x_low']}) = {bB['bas'][1]:.2f} "
+            f"[{bB['bas'][0]:.2f} ; {bB['bas'][2]:.2f}] ; β(x > {ST['x_high']}) = {bB['haut'][1]:.2f} [{bB['haut'][0]:.2f} ; {bB['haut'][2]:.2f}]")
         log(f"excentricité mesurée (angles v–r, sans |ṽ|) : α(x < {ST['x_low']}) = {bN['bas'][1]:.2f} [{bN['bas'][0]:.2f} ; {bN['bas'][2]:.2f}] ; "
             f"α(x > {ST['x_high']}) = {bN['haut'][1]:.2f} [{bN['haut'][0]:.2f} ; {bN['haut'][2]:.2f}] ; scénarios : "
             + ", ".join(f"{k} {tuple(round(a, 2) for a in v['x'])}" for k, v in ecc_sc.items()))

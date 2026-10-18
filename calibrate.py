@@ -42,8 +42,9 @@ def sample_ecc(n, rng, ecc="thermal", rsky=None, x=None):
         a = alpha_profile(rsky, ecc[0], ecc[1])
     return np.minimum(rng.random(n)**(1.0/(np.asarray(a) + 1.0)), 0.999)
 
-def kepler_geometry(n, rng, ecc="thermal", rsky=None, x=None):
-    e = sample_ecc(n, rng, ecc, rsky, x)
+def _orbits(e, rng):
+    """Orbites képlériennes (a = 1), phase et orientation aléatoires : ṽ vectoriel projeté, r3D/rsky, rsky (en unités de a)."""
+    n = len(e)
     Mn = 2*np.pi*rng.random(n); E = Mn.copy()
     for _ in range(40): E = E - (E - e*np.sin(E) - Mn)/(1 - e*np.cos(E))
     r = np.stack([np.cos(E)-e, np.sqrt(1-e**2)*np.sin(E), np.zeros(n)], 1)
@@ -56,7 +57,25 @@ def kepler_geometry(n, rng, ecc="thermal", rsky=None, x=None):
                   np.stack([2*(b*d-a*c), 2*(c*d+a*b), 1-2*(b*b+c*c)], 1)], 1)
     r = np.einsum("nij,nj->ni", R, r); v = np.einsum("nij,nj->ni", R, v)
     rsky_ = np.hypot(r[:, 0], r[:, 1])
-    return v[:, :2]*np.sqrt(rsky_)[:, None], np.linalg.norm(r, axis=1)/rsky_
+    return v[:, :2]*np.sqrt(rsky_)[:, None], np.linalg.norm(r, axis=1)/rsky_, rsky_
+
+def kepler_geometry(n, rng, ecc="thermal", rsky=None, x=None):
+    """Orbites conditionnées à la séparation projetée observée. Par défaut, dN/d ln a uniforme (β = 1, Öpik) : la phase
+    et l'orientation sont uniformes. v0.8.1 : si ecc = {"x": ..., "beta": (β_bas, β_haut)}, la distribution des
+    demi-grands axes dN/da ∝ a^-β (β interpolé en log x comme α) est prise en compte par rééchantillonnage pondéré
+    ρ^(β-1), ρ = séparation projetée / a (4 candidats par paire)."""
+    beta = ecc.get("beta") if isinstance(ecc, dict) else None
+    if beta is None:
+        vt, ratio, _ = _orbits(sample_ecc(n, rng, ecc, rsky, x), rng)
+        return vt, ratio
+    Kc = 4
+    xr = np.repeat(x, Kc); rr = None if rsky is None else np.repeat(rsky, Kc)
+    vt, ratio, rho = _orbits(sample_ecc(n*Kc, rng, ecc, rr, xr), rng)
+    b = alpha_from_x(xr, *beta)
+    w = (np.maximum(rho, 1e-6)**(b - 1.0)).reshape(n, Kc)
+    cw = np.cumsum(w, 1); pick = (cw < rng.random(n)[:, None]*cw[:, -1:]).sum(1)
+    idx = np.arange(n)*Kc + np.minimum(pick, Kc - 1)
+    return vt[idx], ratio[idx]
 
 def simulate(x, vc, sv, truth, rng, vtmax=BASE["vtmax"], dvsky=BASE["dvsky"], ecc="thermal", rsky=None):
     """Une réalisation (compatibilité : utilisée par les scripts de validation)."""

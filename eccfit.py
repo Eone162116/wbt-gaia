@@ -54,10 +54,28 @@ def measure(psi, x, vc, sv, rng, truth="newton", R=100, vtmax=2.5, dvsky=10.0, x
         out[z] = fit(psi[idx], tpl); out["n_" + z] = int(len(idx))
     return out
 
-def scenarios(band_newton, band_mond):
-    """Scénarios d'excentricité mesurés : central, le plus favorable à Newton (S maximal : α bas élevé, α haut faible),
-    le plus favorable à MOND (S minimal : α bas faible, α haut élevé)."""
+def beta_fit(s, lo, hi):
+    """v0.8.1 : indice β d'une loi de puissance dN/ds ∝ s^-β tronquée sur [lo, hi] (maximum de vraisemblance),
+    bande à ±2σ. Séparations projetées seulement : aucune vitesse."""
+    v = np.asarray(s)[(np.asarray(s) >= lo) & (np.asarray(s) < hi)]; bs = np.linspace(0.0, 4.0, 801)
+    def ll(b):
+        if abs(1 - b) < 1e-9: return -len(v)*np.log(np.log(hi/lo)) - np.log(v).sum()
+        return len(v)*np.log((1 - b)/(hi**(1 - b) - lo**(1 - b))) - b*np.log(v).sum()
+    L = np.array([ll(b) for b in bs]); ok = bs[L >= L.max() - 2.0]
+    return float(ok.min()), float(bs[np.argmax(L)]), float(ok.max())
+
+def scenarios(band_newton, band_mond, band_beta=None):
+    """Scénarios mesurés : central, le plus favorable à Newton (S maximal : α bas élevé, α haut faible ; gradient de β minimal),
+    le plus favorable à MOND (S minimal : α bas faible, α haut élevé ; gradient de β maximal).
+    band_beta (v0.8.1) : {'bas': (min, β, max), 'haut': (...)} ; la pente des demi-grands axes abaisse la médiane de ṽ quand
+    elle s'accentue avec la séparation, sans changer ψ."""
     bn, bm = band_newton, band_mond
-    return {"mes_central": {"x": (bn["bas"][1], bn["haut"][1])},
-            "mes_pire_newton": {"x": (bn["bas"][2], bn["haut"][0])},
-            "mes_pire_mond": {"x": (bm["bas"][0], bm["haut"][2])}}
+    sc = {"mes_central": {"x": (bn["bas"][1], bn["haut"][1])},
+          "mes_pire_newton": {"x": (bn["bas"][2], bn["haut"][0])},
+          "mes_pire_mond": {"x": (bm["bas"][0], bm["haut"][2])}}
+    if band_beta is not None:
+        bb = band_beta
+        sc["mes_central"]["beta"] = (bb["bas"][1], bb["haut"][1])
+        sc["mes_pire_newton"]["beta"] = (bb["bas"][2], max(bb["haut"][0], bb["bas"][2]))   # gradient minimal
+        sc["mes_pire_mond"]["beta"] = (bb["bas"][0], bb["haut"][2])                          # gradient maximal
+    return sc
