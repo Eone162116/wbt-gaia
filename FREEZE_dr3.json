@@ -1,5 +1,5 @@
 {
-  "frozen_at_utc": "2026-10-18T13:07:04Z",
+  "frozen_at_utc": "2026-10-18T13:27:18Z",
   "files": {
     "wbt_pipeline.py": "8f6523ad90363323dbec8dbcbcbc1323e688c1f7782a5336b10757dbfffe153e",
     "calibrate.py": "0f8bc1de6a9abf120d6b4e80fbbba26178b06505403d82f2429f19d24d25fca8",
@@ -11,7 +11,7 @@
     "finfer.py": "54c0a3d6c9da2e164a24eadb79d8e698f4eec1883c27edbaa604e6503928086c",
     "validation_contamination/pgrid.npy": "8bb4ebefaf8b581b2f71adcf01ea6141b85380068bd78f25ee5c246262b5b6c0",
     "validation_contamination/pgrid_dr3.npy": "54dff79c0354bc4fbcea00b50818aeb01316527b70fb80f2721e3507989c255c",
-    "config_prereg.json": "83f97947b96dee1679ef1d68c030ad122fb22318c72261f768b5b74f0022257d",
+    "config_prereg.json": "43e716c6b3e07743fb14755bcc07833c4fc31531cacd0c35aa304cb8cdd4edf0",
     "mocks_dr3.csv": "5a7e626bad2f4a758b869c86204d37c9b44f1e99fff7cd782349b0f1de797f54",
     "envelope_dr3.csv": "023f7bd463b03245d964845c0cead303a8f1d488ceb8bf3bf4fc7f4f4ee2599b",
     "finfer_dr3.csv": "36e80b11039b273236be48aee97eb29c008baee5038dff64713c594c07e033dc",
@@ -27,5 +27,5 @@
   "arrays": {
     "sample_ids": "bf36fc0dc8109142d3f61c58b96458ad2099e2e2d8daf01f48ed1d0986651bbe"
   },
-  "manifest_sha256": "bd2e4592bf73886525e6544712ca2153dd0abf634dea62ab25c74888bba04293"
+  "manifest_sha256": "c5c86e659e4fa5d1146760a14309f4b4a750ec484788d475d7d5c8640789b1c0"
 }

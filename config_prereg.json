@@ -150,14 +150,16 @@
     "null_newton": "enveloppe_max",
     "p_rule": "borne haute Clopper-Pearson 95 % ET approximation gaussienne < p_threshold",
     "n_min_per_zone": 100,
-    "primary_test": "conjoint",
+    "primary_test": "S",
     "promotion": {
       "regle": "gain de probabilité d'un verdict tranché à ≈ 2400 paires ≥ +0,10 ET biais de robustesse < 0,5σ, fixée le 18/10/2026 avant tout calcul de Λ sur données réelles",
       "resultat_dr3": {
         "gain": 0.12,
         "biais_max_sigma": 0.38
       },
-      "etude": "validation_joint/promotion_study.py"
+      "etude": "validation_joint/promotion_study.py",
+      "statut": "suspendue le 18/10/2026 : Λ observé instable (−15,4 et +5,2 sur deux répétitions DR3 différant de quelques paires ; influence d'une paire jusqu'à 6,8). Réexamen en v0.9.1.",
+      "criteres_stabilite": "dispersion de Λ_obs entre 5 tirages de gabarits < 1,0 ; influence maximale d'une paire < 1,5"
     }
   },
   "multiverse": {
