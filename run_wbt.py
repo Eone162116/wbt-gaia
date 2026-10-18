@@ -37,7 +37,8 @@ def primary_selection(K):
 
 if STAGE in ("fetch", "all"):
     import fetch_gaia as fg
-    fg.fetch_catalog(REL); log("catalogue complet :", fg.check_complete(REL))
+    fg.fetch_catalog(REL); ok = fg.check_complete(REL); log("catalogue complet :", ok)
+    if not ok: raise SystemExit(f"Catalogue incomplet : lance « python fetch_gaia.py repair {REL} » puis relance fetch.")   # v0.9.1
 
 if STAGE in ("build", "all"):
     df = load_catalog(pattern); I, J = find_links(df, snr_main=P["snr_main"], plx_main=1000/(1.05*max(CFG["multiverse"]["dmax"])))
@@ -196,6 +197,7 @@ if STAGE in ("blind", "all"):
         sh0 = "raghavan2010" if "raghavan2010" in fb else list(fb)[0]
         cont = [(sh0, 0.0)] + [(sh, fb[sh][1]) for sh in fb] + [(sh0, fb[sh0][2])]
         Tj = jl.templates(geo, zs, b_c, cont, CC, rng_j, JC["R_templates"]//(2 if quick else 1), P["vtmax"], P["dvsky"], grid_j)
+        Tj["D"] = Tj["D"].astype(np.float32).astype(float)     # v0.9.1 : simulations et levée sur les mêmes gabarits que le fichier gelé
         nJ = JC["n_par_scenario"]//(10 if quick else 1)
         scen_j = [("newton", "central", a_c, b_c, fb[sh0][1]), ("newton", "pire_newton_f_haut", a_pn, b_pn, fb[sh0][2]),
                   ("mond", "central", a_c, b_c, fb[sh0][1]), ("mond", "pire_mond_f0", a_pm, b_pm, 0.0), ("mond", "pire_mond_f_haut", a_pm, b_pm, fb[sh0][2])]
@@ -205,7 +207,7 @@ if STAGE in ("blind", "all"):
                 lv_, ps_, k_ = jl.simulate_obs(geo, a_, b_, int(hyp == "mond"), f_, sh0, CC, rng_j, P["vtmax"], P["dvsky"], grid=grid_j)
                 rows_j.append((hyp, lab, jl.lam(lv_, ps_, k_, zs, Tj)))
         Jm = pd.DataFrame(rows_j, columns=["hyp", "scenario", "lam"]); Jm.to_csv(f"joint_mocks_{REL}.csv", index=False)
-        np.savez(f"joint_{REL}.npz", T=Tj, cont=np.array([f"{s_}:{v_}" for s_, v_ in cont]))
+        np.savez_compressed(f"joint_{REL}.npz", D=Tj["D"].astype(np.float32), cdf=Tj["cdf"], c=Tj["c"], cont=np.array([f"{s_}:{v_}" for s_, v_ in cont]))
         gj = Jm.groupby(["hyp", "scenario"]).lam
         log(f"test conjoint ({time.time()-t3:.0f} s, {nJ} simulations par scénario) : Λ moyen ± σ "
             + ", ".join(f"{h}/{s_} {gj.mean()[(h, s_)]:+.1f} ± {gj.std()[(h, s_)]:.1f}" for h, s_ in gj.mean().index))
@@ -234,7 +236,7 @@ if STAGE == "unblind":
     if min(nlo, nhi) < CFG["decision"].get("n_min_per_zone", 0): res["verdict"] += " — zone de x sous-dimensionnée"
     if CFG["calibration"].get("joint"):      # v0.9 : test conjoint, Λ observé calculé une seule fois
         import jointlik as jl
-        Tj = np.load(f"joint_{REL}.npz")["T"]; Jm = pd.read_csv(f"joint_mocks_{REL}.csv")
+        Zj = np.load(f"joint_{REL}.npz"); Tj = dict(D=Zj["D"].astype(float), cdf=Zj["cdf"], c=float(Zj["c"])); Jm = pd.read_csv(f"joint_mocks_{REL}.csv")
         zs = {"bas": np.where(x < ST["x_low"])[0], "haut": np.where(x > ST["x_high"])[0]}
         lam_obs = jl.lam(np.log10(v), K.psi.values[m], np.ones(len(x), bool), zs, Tj)
         J = pd.DataFrame([dict(hyp=h, scenario=s_, **cal._tail(g_.lam.values, lam_obs, "upper" if h == "newton" else "lower"))

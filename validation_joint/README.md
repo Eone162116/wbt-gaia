@@ -20,3 +20,7 @@ Tests de robustesse : effet sur Λ sous Newton, en écarts-types de Λ.
 Le test conjoint est donc plus puissant, mais plus dépendant du modèle. Sa promotion exige que la contamination entre dans les gabarits (bande de f_in mesurée), et qu'un test de robustesse montre un biais résiduel inférieur à 0,5σ.
 
 Note : une première version sans η donnait 4,8σ de séparation. Ce chiffre était artificiel, car il exploitait la normalisation absolue de ṽ, donc la calibration des masses.
+
+## v0.9.1 : stabilité du test conjoint lissé (18/10/2026)
+
+Simulation seulement (`stability_study.py`, résultats dans `stability_dr3.csv`). Vingt jeux simulés à la géométrie DR3 (10 Newton central, 10 MOND central), cinq tirages indépendants de gabarits (R = 90). Critère (c), dispersion de Λ due aux gabarits, moyenne quadratique : 0,97, sous le seuil de 1,0. Critère (d), influence maximale d'une paire, 90e centile : 1,72, au-dessus du seuil de 1,5. Étude de promotion (`promotion_dr3.csv`, gabarits R = 30, à titre d'information) : gain de puissance +0,65 à ≈ 2400 paires, mais biais de 0,50σ pour f_in = 0,5, au seuil. La v0.9.1 n'est donc pas promue : S reste le test principal, et le test conjoint une analyse secondaire.

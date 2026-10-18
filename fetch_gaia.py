@@ -27,6 +27,14 @@ def server_count(release):
     r = requests.post(t["url"], data=dict(REQUEST="doQuery", LANG="ADQL", FORMAT="csv", QUERY=q), timeout=300)
     return int(r.text.strip().splitlines()[-1])
 
+def slice_count(release, lo, hi):
+    """v0.9.1 : nombre de lignes attendu par le serveur pour une tranche [lo, hi[ de parallaxe."""
+    sch = CFG["tap"]["schema"][release]
+    q = (f"SELECT COUNT(*) AS n FROM {sch}.gaia_source WHERE parallax >= {lo:.6f} AND parallax < {hi:.6f} "
+         f"AND parallax_over_error > {CFG['tap']['snr_catalog']}")
+    r = requests.post(CFG["tap"]["url"], data=dict(REQUEST="doQuery", LANG="ADQL", FORMAT="csv", QUERY=q), timeout=300)
+    return int(r.text.strip().splitlines()[-1])
+
 def fetch_range(release, lo, hi, outdir, depth=0):
     out = os.path.join(outdir, f"{release}_{lo:.6f}_{hi:.6f}.csv")
     if os.path.exists(out) and os.path.getsize(out) > 100: return
@@ -39,6 +47,8 @@ def fetch_range(release, lo, hi, outdir, depth=0):
         mid = 1000 / (((1000/lo)**3 + (1000/min(hi, 1e4))**3) / 2) ** (1/3)
         print(f"{'  '*depth}{lo:.3f}-{hi:.3f} : {n} lignes = limite, découpe en {lo:.3f}-{mid:.3f}-{hi:.3f}", flush=True)
         fetch_range(release, lo, mid, outdir, depth+1); fetch_range(release, mid, hi, outdir, depth+1); return
+    ref = slice_count(release, lo, hi)                    # v0.9.1 : troncature silencieuse SOUS la limite de lignes
+    if n != ref: raise RuntimeError(f"tranche {lo:.6f}-{hi:.6f} incomplète : {n} lignes reçues, {ref} attendues")
     open(out, "wb").write(content)
     print(f"{'  '*depth}{lo:.3f}-{hi:.3f} mas : {n} lignes, {time.time()-t:.0f} s", flush=True)
 
@@ -72,6 +82,19 @@ def fetch_extra(release, source_ids, table, cols, chunk=400):
         parts.append(pd.read_csv(BytesIO(_sync(q))))
     return pd.concat(parts, ignore_index=True) if parts else pd.DataFrame(columns=["source_id"]+cols)
 
+def repair(release, outdir="."):
+    """v0.9.1 : compare chaque tranche locale au compte du serveur et supprime les tranches incomplètes,
+    qu'une nouvelle passe de fetch_catalog retéléchargera. Renvoie la liste des tranches supprimées."""
+    import glob, re
+    bad = []
+    for f in sorted(glob.glob(os.path.join(outdir, f"{release}_*.csv"))):
+        lo, hi = map(float, re.findall(rf"{release}_([\d.]+)_([\d.]+)\.csv", os.path.basename(f))[0])
+        n = sum(1 for _ in open(f, "rb")) - 1; ref = slice_count(release, lo, hi)
+        if n != ref: bad.append(f); print(f"incomplète : {os.path.basename(f)} ({n} lignes sur {ref}) — supprimée", flush=True); os.remove(f)
+    print(f"{len(bad)} tranche(s) incomplète(s) supprimée(s)" + (" : relance « python run_wbt.py " + release + " fetch »." if bad else "."))
+    return bad
+
 if __name__ == "__main__":
+    if len(sys.argv) > 2 and sys.argv[1] == "repair": repair(sys.argv[2]); sys.exit()
     rel = sys.argv[1] if len(sys.argv) > 1 else CFG["release"]
     fetch_catalog(rel)

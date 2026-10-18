@@ -1,11 +1,28 @@
-"""v0.9 — Test conjoint (norme et direction des vitesses) : rapport de vraisemblance profilé Λ = 2 [ln L(MOND) − ln L(Newton)].
-Observables par paire : log ṽ et ψ (angle séparation–vitesse relative), dans deux zones de x (x < 0,3 ; x > 1).
-Gabarits 2D simulés sur la géométrie, le bruit et les coupes de l'échantillon, pour chaque hypothèse, chaque α (par zone)
-et chaque scénario de contamination (forme × f_in mesurés), avec la pente β mesurée.
-Nuisances profilées : α dans chaque zone, scénario de contamination (commun aux zones), échelle globale η de ṽ (±0,05 dex,
-commune aux zones : absorbe les erreurs de masse uniformes). Λ n'utilise donc ni la normalisation absolue de ṽ, ni une
-excentricité supposée. Simulation seulement avant la levée ; Λ observé calculé une seule fois à la levée."""
+"""v0.9.1 — Test conjoint lissé et continu : Λ = 2 [max ln L(MOND) − max ln L(Newton)].
+Observables par paire : log ṽ et ψ (angle séparation–vitesse relative), zones x < 0,3 et x > 1.
+Changements par rapport à la v0.9 (instabilité constatée le 18/10/2026 : une paire pouvait déplacer Λ de 6,8) :
+- gabarits = densités 2D fines (0,01 dex × 1°) lissées par un noyau gaussien (H_LV, H_PS), simulées SANS la coupe ṽ < vtmax ;
+- vraisemblance évaluée par interpolation bilinéaire au point observé (plus de cases ; continue en les données) ;
+- échelle globale η : la densité est décalée de η puis tronquée à vtmax et renormalisée exactement (Z(η) = F(c − η)) ;
+- α interpolé linéairement entre les nœuds de gabarits (densités mélangées), profilé sur une grille fine (pas 0,1) ;
+  η profilé sur une grille fine (pas 0,005 dex) : avec des densités lisses, Λ est une fonction continue des données ;
+- nombres aléatoires communs : dans une zone, toutes les configurations (γ, contamination, α) partagent les mêmes tirages
+  d'orbites, de compagnons et de bruit, si bien que le bruit Monte-Carlo des gabarits se compense dans Λ ;
+- plancher : mélange (1 − EPS) × gabarit + EPS × densité uniforme sur le domaine observable (paires hors modèle).
+Les hyperparamètres (H_LV, H_PS, EPS, grilles, R = 90 dans la configuration) ont été fixés le 18/10/2026 sur des jeux simulés
+à la géométrie DR3 (graine de réglage distincte de celle de l'évaluation), avant tout calcul de Λ v0.9.1 sur des vitesses observées.
+Physique des simulations (orbites, MOND, contamination, bruit, coupes) inchangée depuis la v0.9."""
 import numpy as np
+from scipy.ndimage import gaussian_filter
+
+DLV, DPS = 0.01, 1.0
+LVG = np.round(np.arange(-1.8, 0.6 + 1e-9, DLV), 4)    # centres en log ṽ
+PSG = np.arange(0.0, 90.0 + 1e-9, DPS)                 # centres en ψ (degrés)
+H_LV, H_PS = 0.06, 6.0                                  # largeurs du noyau (dex, degrés), fixées le 18/10/2026
+EPS = 0.01                                              # poids du plancher uniforme
+AL = np.round(np.arange(0.0, 3.01, 0.25), 2)            # nœuds de α (gabarits simulés)
+AF = np.round(np.linspace(0.0, 3.0, 31), 3)             # α fin (profilage, pas 0,1)
+ETA = np.round(np.linspace(-0.05, 0.05, 21), 5)         # η fin (profilage, pas 0,005 dex)
 from wbt_pipeline import observe
 import calibrate as cal
 import contamination as ct
@@ -31,60 +48,103 @@ def _orbits(e, rng):
 def simulate_obs(G, a_lohi, b_lohi, gamma, f_in, shape, ccfg, rng, vtmax=2.5, dvsky=10.0, kc=4, mass_bias=1.0, grid="dr3"):
     """Une réalisation de l'échantillon G (dict d'arrays : x, vc, sv (N,4), d, rsky, M, m1, m2, G1, G2).
     Renvoie (log ṽ, ψ, retenu) par paire."""
+    r_orb, r_con, r_obs = rng if isinstance(rng, tuple) else (rng, rng, rng)   # v0.9.1 : flux séparés possibles
     x = G["x"]; n = len(x)
     a = cal.alpha_from_x(x, *a_lohi); b = cal.alpha_from_x(x, *b_lohi)
     X = np.repeat(np.arange(n), kc)
-    e = np.minimum(rng.random(n*kc)**(1.0/(a[X] + 1.0)), 0.999)
-    rs, vt, ratio, rho = _orbits(e, rng)
+    e = np.minimum(r_orb.random(n*kc)**(1.0/(a[X] + 1.0)), 0.999)
+    rs, vt, ratio, rho = _orbits(e, r_orb)
     w = (np.maximum(rho, 1e-6)**(b[X] - 1.0)).reshape(n, kc); cw = np.cumsum(w, 1)
-    pick = np.minimum((cw < rng.random(n)[:, None]*cw[:, -1:]).sum(1), kc - 1); j = np.arange(n)*kc + pick
+    pick = np.minimum((cw < r_orb.random(n)[:, None]*cw[:, -1:]).sum(1), kc - 1); j = np.arange(n)*kc + pick
     rs, vt, ratio = rs[j], vt[j], ratio[j]
     if gamma: vt = vt*cal.mond_boost3d(x*ratio)[:, None]
     v = vt*G["vc"][:, None]*np.sqrt(mass_bias)
     removed = np.zeros(n, bool); Mh = np.zeros(n)
     if f_in > 0:
         for mc, Gc in (("m1", "G1"), ("m2", "G2")):
-            has = rng.random(n) < f_in; q = rng.uniform(*ccfg["q_range"], n); m1 = G[mc]
-            a_in, Pyr = ct.draw_companions(m1, q, rng, shape)
+            has = r_con.random(n) < f_in; q = r_con.uniform(*ccfg["q_range"], n); m1 = G[mc]
+            a_in, Pyr = ct.draw_companions(m1, q, r_con, shape)
             has &= a_in < ccfg["stability"]*G["rsky"]; i = np.where(has)[0]
             if len(i) == 0: continue
             qq, aa, dd = q[i], a_in[i], G["d"][i]
             al = 1000*aa*np.abs(qq/(1 + qq) - qq**4/(1 + qq**4))/dd
-            v[i] += 4.740470446*ct.photocentre_pm(np.maximum(al, 1e-9), Pyr[i], rng)*dd[:, None]/1000
+            v[i] += 4.740470446*ct.photocentre_pm(np.maximum(al, 1e-9), Pyr[i], r_con)*dd[:, None]/1000
             Mh[i] += qq*m1[i]
-            det = rng.random(len(i)) < ct.p_epoch(al, Pyr[i], grid)
+            det = r_con.random(len(i)) < ct.p_epoch(al, Pyr[i], grid)
             dG = ct.mg_of_mass(qq*m1[i]) - ct.mg_of_mass(m1[i]); G2 = G[Gc][i] + dG
-            rh = aa*np.sqrt(1 - rng.uniform(-1, 1, len(i))**2)/dd
-            det |= rng.random(len(i)) < (G2 < 20.7)/(1 + np.exp(-(np.log10(rh) - np.log10(ct.theta50(dG)))/0.05))
+            rh = aa*np.sqrt(1 - r_con.uniform(-1, 1, len(i))**2)/dd
+            det |= r_con.random(len(i)) < (G2 < 20.7)/(1 + np.exp(-(np.log10(rh) - np.log10(ct.theta50(dG)))/0.05))
             removed[i[det]] = True
-    v = observe(v*np.sqrt(1 + Mh/G["M"])[:, None], G["sv"], rng)
+    v = observe(v*np.sqrt(1 + Mh/G["M"])[:, None], G["sv"], r_obs)
     va = np.linalg.norm(v, axis=1); keep = (va/G["vc"] < vtmax) & (va < dvsky) & ~removed
     c = np.abs((rs*v).sum(1))/np.linalg.norm(rs, axis=1)/np.maximum(va, 1e-12)
     return np.log10(np.maximum(va/G["vc"], 1e-6)), np.degrees(np.arccos(np.clip(c, 0, 1))), keep
 
-def hist2(lv, ps):
-    h, _, _ = np.histogram2d(np.clip(lv, LV[0], LV[-1] - 1e-9), ps, [LV, PS]); return h.ravel()
-
 def sub(G, idx, rep=1):
     k = np.tile(idx, rep); return {key: (val[k] if np.ndim(val) == 1 else val[k]) for key, val in G.items()}
 
+
+def _density(lv, ps):
+    """Densité lissée non tronquée sur la grille fine (par dex et par degré) et sa fonction de répartition en log ṽ."""
+    e_lv = np.r_[LVG - DLV/2, LVG[-1] + DLV/2]; e_ps = np.r_[PSG - DPS/2, PSG[-1] + DPS/2]
+    h, _, _ = np.histogram2d(np.clip(lv, LVG[0], LVG[-1]), np.clip(ps, 0, 90), [e_lv, e_ps])
+    h = gaussian_filter(h, (H_LV/DLV, H_PS/DPS), mode=("nearest", "reflect"))
+    D = h/(h.sum()*DLV*DPS)
+    cdf = np.r_[0.0, np.cumsum(D.sum(1)*DPS*DLV)]          # aux bords e_lv
+    return D, cdf
+
 def templates(G, zones, beta, cont_scen, ccfg, rng, R=30, vtmax=2.5, dvsky=10.0, grid="dr3"):
-    """T[z, γ, c, α, bin] (log-probabilités lissées). cont_scen : liste de (forme, f_in)."""
-    T = np.zeros((2, 2, len(cont_scen), len(AL), (len(LV) - 1)*(len(PS) - 1)))
+    """Gabarits lissés : dict(D[z, γ, c, α, lv, ψ] (densité par dex et par degré), cdf[z, γ, c, α, bord], c=log10 vtmax)."""
+    nz, ng, nc, na = 2, 2, len(cont_scen), len(AL)
+    Dz = np.zeros((nz, ng, nc, na, len(LVG), len(PSG)), np.float32); cdf = np.zeros((nz, ng, nc, na, len(LVG) + 1))   # float32 : identique en calibration et à la levée
     for zi, z in enumerate(("bas", "haut")):
-        Gz = sub(G, zones[z], R)
+        Gz = sub(G, zones[z], R); kids = np.random.SeedSequence(int(rng.integers(2**62))).spawn(3)
         for g in (0, 1):
             for ci, (shape, f) in enumerate(cont_scen):
                 for ai, a in enumerate(AL):
-                    lv, ps, k = simulate_obs(Gz, (a, a), beta, g, f, shape, ccfg, rng, vtmax, dvsky, grid=grid)
-                    h = hist2(lv[k], ps[k]) + 0.3; T[zi, g, ci, ai] = np.log(h/h.sum())
-    return T
+                    crn = tuple(np.random.default_rng(kd) for kd in kids)      # mêmes tirages pour γ, c et α
+                    lv, ps, k = simulate_obs(Gz, (a, a), beta, g, f, shape, ccfg, crn, np.inf, dvsky, grid=grid)
+                    D, F = _density(lv[k], ps[k])
+                    Dz[zi, g, ci, ai] = D; cdf[zi, g, ci, ai] = F
+    return dict(D=Dz, cdf=cdf, c=float(np.log10(vtmax)))
 
-def lam(lv, ps, keep, zones, T):
-    """Λ = 2 [max ln L(MOND) − max ln L(Newton)], profilé sur α (par zone), contamination et η."""
-    best = np.full(2, -np.inf)
-    for e in ETA:
-        H = np.stack([hist2(lv[zones[z]][keep[zones[z]]] - e, ps[zones[z]][keep[zones[z]]]) for z in ("bas", "haut")])
-        ll = np.einsum("zb,zgcab->zgca", H, T).max(3).sum(0)          # (γ, c) : max sur α par zone, somme des zones
-        best = np.maximum(best, ll.max(1))
+def _lnp_zone(lv, ps, T, zi):
+    """ln p par paire pour une zone : tableau [γ, c, α_fin, η, paire] (float32). Interpolation bilinéaire vectorisée
+    sur tous les gabarits à la fois ; densité décalée de η, tronquée à c = log10 vtmax et renormalisée."""
+    c = T["c"]; e_lv = np.r_[LVG - DLV/2, LVG[-1] + DLV/2]; U = 1.0/((c - LVG[0])*90.0)
+    lv = np.clip(lv, LVG[0], c); n = len(lv); ne = len(ETA)
+    D = T["D"][zi]; ng, nc, na, nl, npsi = D.shape; Df = D.reshape(ng*nc*na, nl*npsi)
+    u = np.clip((lv[None, :] - ETA[:, None] - LVG[0])/DLV, 0, nl - 1 - 1e-9); v = np.clip(ps/DPS, 0, npsi - 1 - 1e-9)
+    i0 = np.floor(u).astype(int); fu = u - i0; j0 = np.floor(v).astype(int)[None, :]; fv = (v - np.floor(v))[None, :]
+    k00 = (i0*npsi + j0).ravel(); fu = fu.ravel(); fv = np.broadcast_to(fv, (ne, n)).ravel()
+    d = ((1 - fu)*(1 - fv)*Df[:, k00] + (1 - fu)*fv*Df[:, k00 + 1] + fu*(1 - fv)*Df[:, k00 + npsi] + fu*fv*Df[:, k00 + npsi + 1])
+    Z = np.stack([np.interp(c - ETA, e_lv, F) for F in T["cdf"][zi].reshape(-1, nl + 1)])      # P(log ṽ_sim + η < c)
+    P = ((1 - EPS)*d.reshape(-1, ne, n)/np.maximum(Z, 1e-12)[:, :, None] + EPS*U).reshape(ng, nc, na, ne, n)
+    W = np.clip(1 - np.abs((AF[:, None] - AL[None, :])/(AL[1] - AL[0])), 0, None)     # (α_fin, nœud) : interpolation linéaire
+    return np.log(np.einsum("fa,gcaen->gcfen", W, P, optimize=True)).astype(np.float32)
+
+def lam_parts(lv, ps, keep, zones, T):
+    """ln p par paire et par zone (pour Λ et l'influence par exclusion une à une)."""
+    return [(_lnp_zone(lv[zones[z]][keep[zones[z]]], ps[zones[z]][keep[zones[z]]], T, zi), np.asarray(zones[z])[keep[zones[z]]])
+            for zi, z in enumerate(("bas", "haut"))]
+
+def _lam_from(sums):
+    ll = sum(s.max(2) for s in sums)                     # (γ, c, η) : α profilé par zone, zones sommées
+    best = ll.reshape(ll.shape[0], -1).max(1)            # contamination et η communs aux zones
     return float(2*(best[1] - best[0]))
+
+def lam(lv, ps, keep, zones, T, parts=None):
+    """Λ = 2 [max ln L(MOND) − max ln L(Newton)], profilé sur α (par zone), contamination et η (communs)."""
+    parts = parts or lam_parts(lv, ps, keep, zones, T)
+    return _lam_from([p.sum(-1, dtype=np.float64) for p, _ in parts])
+
+def loo_influence(lv, ps, keep, zones, T, parts=None):
+    """ΔΛ = Λ(sans la paire i) − Λ pour chaque paire retenue des deux zones. Renvoie (indices, ΔΛ, Λ)."""
+    parts = parts or lam_parts(lv, ps, keep, zones, T)
+    sums = [p.sum(-1, dtype=np.float64) for p, _ in parts]; L0 = _lam_from(sums)
+    idx, dl = [], []
+    for zi, (p, ii) in enumerate(parts):
+        for j in range(p.shape[-1]):
+            s2 = list(sums); s2[zi] = sums[zi] - p[..., j]
+            idx.append(ii[j]); dl.append(_lam_from(s2) - L0)
+    return np.array(idx), np.array(dl), L0

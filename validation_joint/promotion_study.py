@@ -31,7 +31,7 @@ CONT = [("raghavan2010", 0.0), ("raghavan2010", f["raghavan2010"][1]), ("raghava
 rng = np.random.default_rng(909)
 zones1 = {"bas": np.where(G["x"] < 0.3)[0], "haut": np.where(G["x"] > 1)[0]}
 T = jl.templates(G, zones1, b_c, CONT, CC, rng, R=30, vtmax=P["vtmax"], dvsky=P["dvsky"], grid=GRID)
-print(f"gabarits : {T.shape} ({time.time()-t0:.0f} s)", flush=True)
+print(f"gabarits : {T['D'].shape} ({time.time()-t0:.0f} s)", flush=True)
 
 def dataset(Gs, zs, a, b, g, fin, shape, mb=1.0):
     lv, ps, k = jl.simulate_obs(Gs, a, b, g, fin, shape, CC, rng, P["vtmax"], P["dvsky"], mass_bias=mb, grid=GRID)
