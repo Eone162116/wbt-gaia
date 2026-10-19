@@ -81,6 +81,7 @@ if STAGE == "epoch" or (STAGE == "all" and REL == "dr4"):
     K.to_pickle(f"K_{REL}.pkl")
 
 if STAGE in ("blind", "all"):
+    if os.path.exists(f"BLIND_{REL}_complete.json"): os.remove(f"BLIND_{REL}_complete.json")   # v0.9.4 : invalidé tant que blind n'est pas fini
     K = pd.read_pickle(f"K_{REL}.pkl"); m, vt, b = primary_selection(K)
     if P.get("epoch") and "epoch_ok" not in K.columns:      # v0.7-D : bloquant sur DR4
         if REL == "dr4": raise SystemExit("ARRÊT : crible par époques obligatoire sur DR4 (primary.epoch). Lance d'abord : python run_wbt.py dr4 epoch")
@@ -212,6 +213,8 @@ if STAGE in ("blind", "all"):
         log(f"test conjoint ({time.time()-t3:.0f} s, {nJ} simulations par scénario) : Λ moyen ± σ "
             + ", ".join(f"{h}/{s_} {gj.mean()[(h, s_)]:+.1f} ± {gj.std()[(h, s_)]:.1f}" for h, s_ in gj.mean().index))
     log("contrôles avant levée : " + " ; ".join(f"{k} {'OK' if isinstance(v, dict) and v.get('ok', v.get('recouvrement', True)) else ('—' if isinstance(v, str) else 'ÉCHEC')}" for k, v in ctrl.items()))
+    bl.write_completion(f"BLIND_{REL}_complete.json", frozen_files())   # v0.9.4 : blind mené à son terme
+    log("blind terminé : marqueur de complétude écrit")
 
 def frozen_arrays():
     s = pd.read_csv(f"sample_{REL}.csv")
@@ -219,6 +222,7 @@ def frozen_arrays():
 
 if STAGE == "freeze":
     files = frozen_files()
+    bl.check_completion(f"BLIND_{REL}_complete.json", files)   # v0.9.4 : pas de gel d'un blind incomplet
     man = bl.freeze(f"FREEZE_{REL}.json", files, frozen_arrays())
     log("gel enregistré :", man["frozen_at_utc"], "manifeste", man["manifest_sha256"][:16])
 

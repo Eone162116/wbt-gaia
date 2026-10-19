@@ -48,3 +48,20 @@ def verify(path, files, arrays):
     if bad:
         raise SystemExit(f"LEVÉE REFUSÉE : modifié depuis le gel -> {bad}")
     return man
+
+def write_completion(path, files):
+    """v0.9.4 : écrit, à la toute fin de « blind », les empreintes des fichiers qui seront gelés."""
+    rec = dict(completed_at_utc=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+               files={f: (sha256_file(f) if os.path.exists(f) else None) for f in files})
+    json.dump(rec, open(path, "w", encoding="utf-8"), indent=2)
+    return rec
+
+def check_completion(path, files):
+    """v0.9.4 : refuse le gel si « blind » n'est pas allé au bout, ou si un fichier a changé depuis."""
+    if not os.path.exists(path):
+        raise SystemExit("GEL REFUSÉ : « blind » n'a pas été mené à son terme (marqueur " + path + " absent). Relance « blind » jusqu'au bout.")
+    rec = json.load(open(path, encoding="utf-8"))
+    bad = [f for f in files if rec["files"].get(f) != (sha256_file(f) if os.path.exists(f) else None)]
+    if bad:
+        raise SystemExit("GEL REFUSÉ : modifié depuis la fin de « blind » -> " + str(bad) + ". Relance « blind » avec le code actuel.")
+    return rec
