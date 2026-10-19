@@ -11,3 +11,4 @@ __pycache__/
 !validation_eccentricity/*.csv
 !validation_joint/*.csv
 joint_*.npz
+!validation_joint/**/*.csv
