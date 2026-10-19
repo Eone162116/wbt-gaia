@@ -2226,3 +2226,4 @@
   }
  }
 }
+21:14:32 multivers : 108 spécifications ; S médian +0.073 ; part S > +0,075 : 0.44
