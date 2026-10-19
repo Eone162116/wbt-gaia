@@ -170,7 +170,8 @@
         "critere_d": "NON",
         "pas_eta_dex": 0.005,
         "fichier": "validation_joint/stability_dr3.csv",
-        "provenance": "validation_joint/stability_dr3_provenance.json"
+        "provenance": "validation_joint/stability_dr3_provenance.json",
+        "note": "valeurs du mode rapide (base de la décision) ; voir resultats_mode_complet_2026_10_19"
       },
       "resultat_dr3_v091": {
         "gain": 0.64,
@@ -180,7 +181,8 @@
         "pas_eta_dex": 0.005,
         "simulations": "150 jeux par hypothèse pour les seuils, 300 pour les taux de rejet, 200 par test de robustesse",
         "note_masse": "« masse +20 % » : masse gravitationnelle vraie 20 % plus grande que la masse photométrique (vitesses × √1,2), sans recalcul des masses, de x ni de la sélection.",
-        "fichier": "validation_joint/promotion_dr3.csv"
+        "fichier": "validation_joint/promotion_dr3.csv",
+        "note": "valeurs du mode rapide (base de la décision) ; voir resultats_mode_complet_2026_10_19"
       },
       "cloture": "18/10/2026 : question close. S est le test principal de DR3 et de DR4 ; la promotion du test conjoint n'est pas réexaminée sur la géométrie DR4. Le test conjoint v0.9.1 est rapporté en analyse secondaire, avec sa sensibilité mesurée à la contamination hors bande.",
       "diagnostic_puissance": {
@@ -189,7 +191,45 @@
         "resume": "Décomposition descriptive, conditionnelle au profilage, sur 40 + 40 jeux simulés (influence sur 20 jeux) : séparation 2,21σ, dont 5,1 unités de Λ sur 10,5 viennent de la zone haute pour ṽ entre 1 et √2, et 2,5 de la zone basse ; biais pour f_in = 0,5 : +0,81σ ; influence d'une paire (90e centile) : 1,63. Variante tronquée à ṽ < √2 : 2,25σ, +0,94σ, 2,04. La séparation et la sensibilité à la contamination se concentrent dans la même région de ṽ, et la troncature examinée n'améliore pas la robustesse. Ce n'est pas la preuve qu'aucune autre variante ne ferait mieux ; la question n'est pas rouverte pour autant."
       },
       "correction_eta_2026_10_19": "Audit externe du 19/10/2026, point L : jointlik.py réaffectait ETA sur 11 points (pas de 0,01 dex) au lieu des 21 points gelés (pas de 0,005 dex). Code corrigé en v0.9.3 ; les trois études ont été relancées à l'identique (mêmes graines), et les sorties v0.9.1 et v0.9.2 sont archivées dans validation_joint/archive_eta001. Résultats : (c) 0,97 et (d) 1,72, inchangés ; gain +0,64 (au lieu de +0,65) ; biais maximal 0,50σ. La clôture est maintenue ; l'engagement de ne pas la rouvrir a été pris avant la relance.",
-      "portee_simulations": "Aucune vitesse observée n'entre dans la statistique calculée sur les jeux simulés. La géométrie simulée est en revanche celle de l'échantillon principal, dont la sélection applique des coupes cinématiques (ṽ < vtmax, σ(ṽ), ΔRV, Δv sur le ciel) : elle dépend donc des vitesses observées."
+      "portee_simulations": "Aucune vitesse observée n'entre dans la statistique calculée sur les jeux simulés. La géométrie simulée est en revanche celle de l'échantillon principal, dont la sélection applique des coupes cinématiques (ṽ < vtmax, σ(ṽ), ΔRV, Δv sur le ciel) : elle dépend donc des vitesses observées.",
+      "resultats_mode_complet_2026_10_19": {
+        "entrees": "répétition DR3 complète v0.9.4 (gel ba9ca861) : α = (2,00 ; 0,50)",
+        "stabilite": {
+          "dispersion_gabarits": 0.97,
+          "influence_p90": 1.56,
+          "critere_c": "OK",
+          "critere_d": "NON"
+        },
+        "promotion": {
+          "gain": 0.51,
+          "biais_max_sigma": 0.52,
+          "biais_max_cas": "f_in 0,5 hors bande",
+          "biais_masse_sigma": 0.19,
+          "biais_beta_sigma": -0.02,
+          "puissance_2378_paires": {
+            "conjoint": [
+              0.37,
+              0.56
+            ],
+            "S": [
+              0.07,
+              0.05
+            ]
+          }
+        },
+        "origine": {
+          "separation_sigma": 2.05,
+          "part_zone_haute_1_racine2": "5,7 sur 9,1",
+          "biais_f_in_05_sigma": 0.26,
+          "influence_p90": 1.51,
+          "tronque": {
+            "separation_sigma": 1.99,
+            "biais_f_in_05_sigma": 0.4,
+            "influence_p90": 1.87
+          }
+        },
+        "note": "Les critères (b) et (d) restent non satisfaits, avec de faibles marges, du même ordre que l'incertitude Monte-Carlo. Les sorties du mode rapide, base de la décision, sont archivées dans validation_joint/archive_mode_rapide. Décision inchangée."
+      }
     }
   },
   "multiverse": {
@@ -231,5 +271,14 @@
     "uwe_max": 1.4,
     "min_transits": 15,
     "missing": "exclude"
+  },
+  "multiverse_resultat_dr3": {
+    "specifications": 108,
+    "S_median": 0.073,
+    "S_min": -0.003,
+    "S_max": 0.233,
+    "rang_principale": 0.58,
+    "effets_moyens": "sans dégroupage S ≈ +0,149 contre ≈ +0,05 avec (−0,10) ; correction sphérique −0,016 ; filtre HR +0,012 à +0,016 ; dmax 150 pc +0,034 et 200 pc +0,006 (référence 130 pc) ; RUWE 1,4 +0,006 ; modèle additif, résidu 0,019",
+    "lecture": "Le dégroupage domine : sans lui, S prend des valeurs d'allure MOND sur DR3. Les autres choix déplacent S de moins de 0,035."
   }
 }

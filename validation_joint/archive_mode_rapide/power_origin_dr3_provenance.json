@@ -1,0 +1,33 @@
+{
+ "date": "2026-10-19T14:01:28",
+ "release": "dr3",
+ "script": "validation_joint/power_origin.py",
+ "commit": "9ec7aa596988fe22c2e530945842220d510c217e",
+ "depot_modifie": true,
+ "graines": {
+  "gabarits": 777,
+  "jeux": 4242
+ },
+ "jointlik": {
+  "H_LV": 0.06,
+  "H_PS": 6.0,
+  "EPS": 0.01,
+  "n_eta": 21,
+  "pas_eta": 0.0050000000000000044,
+  "n_alpha_fin": 31
+ },
+ "numpy": "2.4.4",
+ "pandas": "3.0.2",
+ "sha256": {
+  "K_dr3.pkl": "6d09fe03511a2ac9a851aa3866a5ebf5130230c1e1c1524fbf2f80c3440faa74",
+  "eccfit_dr3.csv": "b0a464bbf989fb1ce8392044740d99d0b44a1a2bac0b9a290ac6e8eed50c58d3",
+  "finfer_dr3.csv": "5779669b102ab89d863d32a212d76d40d9d4164ae493d4a617707a5842a5eb20",
+  "jointlik.py": "0b9bfc215792d58b744fcbac6a10b0cb47c0cdd51f3b56d6f2691309286317b4",
+  "config_prereg.json": "b5e6f18b0e1de97c75e00d4944b9f28ee3b6683562d8f6319297ebdd6c8af9bd",
+  "validation_joint/common.py": "cd069476a40514bc4e93f1f00e3c8a5ce49be8f52af7a3407eea4cdff3b821e2",
+  "validation_joint/power_origin.py": "c3aecd4683eba9c13dd309ec028d4b09d65e7feb6d8e6f20c376e7c5416b4cf9"
+ },
+ "R": 90,
+ "n_jeux_par_hypothese": 40,
+ "n_jeux_influence": 20
+}
