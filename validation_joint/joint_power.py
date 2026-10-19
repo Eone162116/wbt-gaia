@@ -1,4 +1,11 @@
-"""Vraisemblance conjointe (ṽ, ψ) vs marche S : étude de puissance par simulation seulement (aucune vitesse observée).
+"""HISTORIQUE (étude exploratoire antérieure à la v0.9, conservée pour la traçabilité ; audit externe du 19/10/2026, points E, F, G, I).
+Ses chiffres ne se transfèrent pas au test conjoint lissé v0.9.1 : vraisemblance binnée, sans renormalisation exacte de la
+troncature ni contamination ; seuils à 3σ extrapolés d'une loi normale estimée sur 150 jeux ; seuils recalculés dans chaque
+scénario perturbé (les taux de rejet de ces scénarios ne sont donc pas ceux de la règle nominale figée) ; « biais de masse
++20 % » = masse gravitationnelle vraie 20 % plus grande que la masse photométrique (vitesses × √1,2), sans recalcul des
+masses, de x ni de la sélection.
+Vraisemblance conjointe (ṽ, ψ) vs marche S : étude de puissance par simulation seulement (aucune vitesse observée dans la
+statistique simulée ; la géométrie provient d'une sélection qui utilise des coupes cinématiques).
 Géométrie, bruit et coupes de l'échantillon principal DR3 ; β fixé aux valeurs mesurées (séparations) ; contamination non
 incluse (comparaison à armes égales des deux tests). Vérités : Newton ou MOND avec α (bas, haut) = (2,0 ; 0,25), le
 scénario central mesuré sur DR3. Test conjoint : rapport de vraisemblance profilé sur α_bas et α_haut, à partir de gabarits

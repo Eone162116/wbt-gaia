@@ -27,10 +27,8 @@ from wbt_pipeline import observe
 import calibrate as cal
 import contamination as ct
 
-LV = np.linspace(-1.6, np.log10(2.5), 11)          # bornes en log ṽ
-PS = np.linspace(0, 90, 7)                          # bornes en ψ (degrés)
-AL = np.round(np.arange(0.0, 3.01, 0.25), 2)       # grille de α
-ETA = np.linspace(-0.05, 0.05, 11)                 # décalages globaux en log ṽ (dex)
+# v0.9.3 : l'ancien bloc de constantes v0.9 (LV, PS, AL, ETA à 11 points) qui écrasait ETA ci-dessus a été retiré
+# (audit externe du 19/10/2026, point L). Les études v0.9.1 et v0.9.2 avaient tourné avec un pas de η de 0,01 dex.
 
 def _orbits(e, rng):
     n = len(e)

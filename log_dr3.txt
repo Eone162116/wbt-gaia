@@ -1928,3 +1928,11 @@
   }
  }
 }
+15:27:10 crible par époques absent (DR3, répétition) : ignoré
+15:27:10 [AVEUGLE] spécification principale : N = 1189 (cible 2000, minimum 1000) ; HR intercept 1.861 ; r/rM : 567 bas, 155 hauts
+15:27:10 [AVEUGLE] médianes binées (permutées, sans information physique) : [{'lo': 0.1, 'hi': 0.2, 'n': 332, 'med': 0.515}, {'lo': 0.2, 'hi': 0.5, 'n': 492, 'med': 0.533}, {'lo': 0.5, 'hi': 1.0, 'n': 210, 'med': 0.588}, {'lo': 1.0, 'hi': 2.0, 'n': 106, 'med': 0.476}, {'lo': 2.0, 'hi': 6.0, 'n': 49, 'med': 0.465}]
+15:27:10 [AVEUGLE] S permuté = -0.086 (attendu ≈ 0)
+15:27:10 effectifs par zone : x < 0.3 : 567 ; x > 1.0 : 155
+15:27:14 pente des demi-grands axes (séparations projetées, sans vitesses) : β(x < 0.3) = 1.43 [1.07 ; 1.79] ; β(x > 1.0) = 2.14 [1.64 ; 2.66]
+15:27:14 excentricité mesurée (angles v–r, sans |ṽ|) : α(x < 0.3) = 2.00 [1.24 ; 2.65] ; α(x > 1.0) = 0.50 [0.00 ; 1.09] ; scénarios : mes_central (2.0, 0.5), mes_pire_newton (2.65, 0.0), mes_pire_mond (1.32, 1.01)
+16:07:22 gel enregistré : 2026-10-19T14:07:21Z manifeste 0a600aab38457cab

@@ -1,5 +1,7 @@
-"""v0.9.2 — Diagnostic (simulation seulement, géométrie DR3, aucune vitesse observée) : d'où vient la puissance du test conjoint v0.9.1 ?
-Décomposition de Λ par paire au point profilé de chaque hypothèse, et variante tronquée à ṽ < √2 (log ṽ < 0,15) pour comparaison.
+"""v0.9.2 — Diagnostic (simulation seulement : aucune vitesse observée n'entre dans la statistique des
+jeux simulés ; géométrie de l'échantillon principal, sélectionné avec des coupes cinématiques) : d'où vient la puissance du test conjoint v0.9.1 ?
+Décomposition DESCRIPTIVE de Λ par paire au point profilé de chaque hypothèse (conditionnelle au profilage,
+sans attribution causale), et variante tronquée à ṽ < √2 (log ṽ < 0,15) pour comparaison.
 À lancer depuis la racine du dépôt après « blind » : python validation_joint/power_origin.py [dr3|dr4]. Sortie : validation_joint/power_origin_<rel>.txt"""
 import os, sys, json, time
 sys.path.insert(0, os.getcwd())
@@ -8,7 +10,10 @@ import builtins
 OUT = []
 def print(*a, **k):
     builtins.print(*a, **k); OUT.append(" ".join(str(x) for x in a))
-exec(open("validation_joint/stability_study.py", encoding="utf-8").read().split("rng = np.random.default_rng(910)")[0].split('"""', 2)[2])
+sys.path.insert(0, os.path.join(os.getcwd(), "validation_joint"))
+from common import load_inputs, provenance
+REL = sys.argv[1] if len(sys.argv) > 1 else "dr3"
+I = load_inputs(REL); P, CC, GRID, R, G, zs, a_c, b_c, f, CONT = (I[k] for k in ("P", "CC", "GRID", "R", "G", "zs", "a_c", "b_c", "f", "CONT"))
 import jointlik as jl
 t0 = time.time()
 T = jl.templates(G, zs, b_c, CONT, CC, np.random.default_rng(777), R=R, vtmax=P["vtmax"], dvsky=P["dvsky"], grid=GRID)
@@ -42,4 +47,6 @@ for variant, cut in (("complet (ṽ < 2,5)", T["c"]), ("tronqué (ṽ < √2)", 
     print("  part de la séparation (E_MOND − E_Newton des contributions) par tranche de log ṽ, zone haute : "
           + " ; ".join(f"{l} {v:+.1f}" for l, v in zip(LAB, d[:-1])) + f" ; zone basse {d[-1]:+.1f} ; total {d.sum():+.1f}", flush=True)
 print(f"({time.time()-t0:.0f} s)")
-open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"power_origin_{REL}.txt"), "w", encoding="utf-8").write("\n".join(OUT) + "\n")
+p_out = os.path.join(os.path.dirname(os.path.abspath(__file__)), f"power_origin_{REL}.txt")
+open(p_out, "w", encoding="utf-8").write("\n".join(OUT) + "\n")
+provenance(REL, "validation_joint/power_origin.py", dict(gabarits=777, jeux=4242), p_out, R=R, n_jeux_par_hypothese=40, n_jeux_influence=20)
