@@ -65,8 +65,8 @@ def contaminated_newton_cond(geo, f_in, rng, cfg, vtmax, dvsky, kepler_geometry_
         v_, k_ = _contaminated_core(g, f_in, rng, cfg, vtmax, dvsky, lambda m, r: kepler_geometry_geo(m, r, g))
         ok = todo[k_]; vt[ok], kept[ok] = v_[k_], True; todo = todo[~k_]
         if not len(todo): break
-    if stats is not None:                                    # v0.9.10 : contrôle de complétude
-        stats["paires"] = stats.get("paires", 0) + n; stats["manquantes"] = stats.get("manquantes", 0) + len(todo)
+    if stats is not None:                                    # v0.9.10-11 : comptes par zone
+        import completude; completude.tally(stats, geo["x"], ~kept)
     return geo["x"][kept], vt[kept]
 
 def contaminated_newton(geo, f_in, rng, cfg, vtmax, dvsky, kepler_geometry):

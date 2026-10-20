@@ -33,7 +33,7 @@ DIRTY = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"],
 UNTRACKED = subprocess.run(["git", "ls-files", "--others", "--exclude-standard"], capture_output=True, text=True, cwd=ROOT).stdout.split()
 TRACKED = set(subprocess.run(["git", "ls-files"], capture_output=True, text=True, cwd=ROOT).stdout.splitlines())
 REQUIRED = ["run_wbt.py", "wbt_pipeline.py", "calibrate.py", "blind.py", "fetch_gaia.py", "epoch_accel.py", "contamination.py",
-            "finfer.py", "acquisition.py", "jointlik.py", "eccfit.py", "config_prereg.json",
+            "finfer.py", "acquisition.py", "completude.py", "jointlik.py", "eccfit.py", "config_prereg.json",
             "validation_contamination/pgrid.npy", "validation_contamination/pgrid_dr3.npy"]
 NOT_TRACKED = [f for f in REQUIRED if f not in TRACKED]       # v0.9.8 : fichiers requis non suivis = jamais copiés (audit v0.9.7, P1)
 if NOT_TRACKED: sys.exit("ARRÊT : fichiers requis non suivis par Git (ils ne seraient pas copiés) : " + ", ".join(NOT_TRACKED)
@@ -166,6 +166,8 @@ REP["controles"] = {
     "multivers DR4 (crible et époques inclus)": os.path.exists("multiverse_dr4.csv"),
     "provenance complète (catalogue, drapeaux, époques)": all(k in json.load(open("ACQUISITION_dr4.json", encoding="utf-8"))
         for k in ("catalogue", "drapeaux", "epoques")) if os.path.exists("ACQUISITION_dr4.json") else False,
+    "complétude des calibrations consignée et gelée": os.path.exists("COMPLETUDE_dr4.json")
+        and "COMPLETUDE_dr4.json" in json.load(open("FREEZE_dr4.json", encoding="utf-8")).get("files", {}),
     "sources de données consignées et gelées": os.path.exists("ACQUISITION_dr4.json")
         and "ACQUISITION_dr4.json" in json.load(open("FREEZE_dr4.json", encoding="utf-8")).get("files", {})}
 REP["resultat_sans_valeur_physique"] = dict(N=R.get("N"), verdict=R.get("verdict"), S_obs=R.get("S_obs"))

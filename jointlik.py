@@ -88,7 +88,8 @@ def simulate_obs_cond(G, *args, max_iter=200, stats=None, **kw):
     passé ces coupes ; en retirant les paires simulées détectées, les jeux simulés gardaient 65 à 76 % des paires (DR3).
     Coupes simulées, et elles seules : crible de contamination simulé, ṽ < vtmax, Δv sur le ciel < dvsky. Les autres étapes de
     sélection (filtre HR, RUWE, dégroupage, présence et écart des vitesses radiales) agissent par la géométrie observée, fixe.
-    v0.9.10 : jusqu'à 200 essais ; stats (dict) cumule « paires » et « manquantes » pour le contrôle de complétude.
+    v0.9.10-11 : jusqu'à 200 essais ; stats (dict) reçoit les comptes par zone (completude.tally). Quasi-complétude contrôlée
+    avec tolérance fixée : la fonction peut rendre moins de paires que N, et la règle par scénario et par zone en décide.
     Échantillonnage par rejet, paire par paire (les paires sont indépendantes à géométrie donnée) : la loi de chaque paire est
     exactement sa loi conditionnelle. Après max_iter essais, les rares paires restantes sont marquées non retenues.
     Mêmes arguments que simulate_obs ; renvoie (log ṽ, ψ, retenue)."""
@@ -97,18 +98,14 @@ def simulate_obs_cond(G, *args, max_iter=200, stats=None, **kw):
         a, b, k = simulate_obs(sub(G, todo), *args, **kw)
         ok = todo[k]; lv[ok], ps[ok], kept[ok] = a[k], b[k], True; todo = todo[~k]
         if not len(todo): break
-    if stats is not None:
-        stats["paires"] = stats.get("paires", 0) + n; stats["manquantes"] = stats.get("manquantes", 0) + len(todo)
+    if stats is not None:                                     # v0.9.11 : comptes par zone (completude.tally)
+        import completude; completude.tally(stats, G["x"], ~kept)
     return lv, ps, kept
 
-def check_completeness(stats, max_frac, label):
-    """v0.9.10 : règle fixée avant les données. Si plus de max_frac des tirages de paires restent non reconstitués après
-    max_iter essais, la calibration est refusée (le modèle simulé n'arrive pas à reproduire l'échantillon observé)."""
-    frac = stats.get("manquantes", 0)/max(stats.get("paires", 1), 1)
-    if frac > max_frac:
-        raise SystemExit(f"CALIBRATION REFUSÉE ({label}) : {stats.get('manquantes', 0)} tirages de paires non reconstitués sur "
-                         f"{stats.get('paires', 0)} ({frac:.3%} > {max_frac:.3%}).")
-    return frac
+def check_completeness(stats, max_frac, label, diag_path=None, section=None):
+    """v0.9.10-11 : relais vers completude.check (règle par scénario et par zone, diagnostic écrit avant tout refus)."""
+    import completude
+    return completude.check(stats, max_frac, label, diag_path, section)
 
 def _density(lv, ps):
     """Densité lissée non tronquée sur la grille fine (par dex et par degré) et sa fonction de répartition en log ṽ."""

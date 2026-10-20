@@ -86,7 +86,7 @@ def simulate(x, vc, sv, truth, rng, vtmax=BASE["vtmax"], dvsky=BASE["dvsky"], ec
     keep = (vt < vtmax) & (va < dvsky)
     return x[keep], vt[keep]
 
-def simulate_batch(x, vc, sv, truth, rng, nb, vtmax=BASE["vtmax"], dvsky=BASE["dvsky"], ecc="thermal", rsky=None, stat_kw=None):
+def simulate_batch(x, vc, sv, truth, rng, nb, vtmax=BASE["vtmax"], dvsky=BASE["dvsky"], ecc="thermal", rsky=None, stat_kw=None, stats=None):
     """nb réalisations vectorisées ; renvoie les nb valeurs de S."""
     stat_kw = stat_kw or {}; N = len(x)
     X = np.tile(x, nb); VC = np.tile(vc, nb); SV = np.tile(np.asarray(sv), (nb, 1)) if np.ndim(sv) == 2 else np.tile(sv, nb)
@@ -96,6 +96,8 @@ def simulate_batch(x, vc, sv, truth, rng, nb, vtmax=BASE["vtmax"], dvsky=BASE["d
     v = observe(vt_vec*VC[:, None], SV, rng)
     va = np.linalg.norm(v, axis=1); vt = va/VC
     keep = (vt < vtmax) & (va < dvsky)
+    if stats is not None:                                    # v0.9.11 : pertes des simulations pures comptées par zone
+        import completude; completude.tally(stats, X, ~keep, stat_kw.get("x_low", 0.3), stat_kw.get("x_high", 1.0))
     out = np.empty(nb)
     for k in range(nb):
         s = slice(k*N, (k + 1)*N); kk = keep[s]
@@ -103,36 +105,38 @@ def simulate_batch(x, vc, sv, truth, rng, nb, vtmax=BASE["vtmax"], dvsky=BASE["d
     return out
 
 def calibrate(x, vc, sv, n_mocks=50000, seed=0, stat_kw=None, rsky=None, ecc="thermal", ecc_scenarios=None,
-              vtmax=BASE["vtmax"], dvsky=BASE["dvsky"], batch=50):
+              vtmax=BASE["vtmax"], dvsky=BASE["dvsky"], batch=50, missing_max=None, diag_path=None):
     """Colonnes : newton, mond (excentricité de référence), puis newton_<scénario>, mond_<scénario>."""
     rng = np.random.default_rng(seed); out = {}
     runs = [("", ecc)] + [("_" + k, v if isinstance(v, dict) else tuple(v)) for k, v in (ecc_scenarios or {}).items()]
     for suffix, e in runs:
         for truth in ("newton", "mond"):
-            vals = []
+            vals = []; st = {}
             for i in range(0, n_mocks, batch):
-                vals.append(simulate_batch(x, vc, sv, truth, rng, min(batch, n_mocks - i), vtmax, dvsky, e, rsky, stat_kw))
+                vals.append(simulate_batch(x, vc, sv, truth, rng, min(batch, n_mocks - i), vtmax, dvsky, e, rsky, stat_kw, st))
             out[truth + suffix] = np.concatenate(vals)
+            if missing_max is not None:                      # v0.9.11 : règle par scénario et par zone
+                import completude; completude.check(st, missing_max, truth + suffix, diag_path, "simulations_pures_S")
     return pd.DataFrame(out)
 
 def calibrate_envelope(geo, n_per_f=20000, seed=0, stat_kw=None, cfg=None, vtmax=BASE["vtmax"], dvsky=BASE["dvsky"], scenarios=None, ecc="thermal",
-                       max_iter=200, missing_max=0.001):
+                       max_iter=200, missing_max=0.001, diag_path=None):
     """Hypothèse nulle newtonienne contaminée (excentricité thermique, le cas le plus défavorable à Newton).
     scenarios : liste (forme, f_in) ; par défaut cfg['f_in'] (mode fixe, v0.5)."""
     import contamination as ct
-    rng = np.random.default_rng(seed + 1); stat_kw = stat_kw or {}; rows = []; stats = {"paires": 0, "manquantes": 0}
+    import completude
+    rng = np.random.default_rng(seed + 1); stat_kw = stat_kw or {}; rows = []; allst = {}
     scenarios = scenarios or [(cfg.get("shape", "raghavan2010"), f) for f in cfg["f_in"]]
     kgg = lambda n, r, g: kepler_geometry(n, r, ecc, g.get("rsky"), g["x"])   # v0.8 ; v0.9.9 : sur le sous-ensemble tiré
     for shape, f in scenarios:
-        c = dict(cfg, shape=shape)
+        c = dict(cfg, shape=shape); st = {}
         for _ in range(n_per_f):
-            xx, vv = ct.contaminated_newton_cond(geo, f, rng, c, vtmax, dvsky, kgg, max_iter, stats)   # v0.9.9 : N simulé = N observé
+            xx, vv = ct.contaminated_newton_cond(geo, f, rng, c, vtmax, dvsky, kgg, max_iter, st)   # v0.9.9 : tirage conditionnel
             rows.append((shape, f, step_stat(xx, vv, **stat_kw)))
-    frac = stats["manquantes"]/max(stats["paires"], 1)
-    if frac > missing_max:                                   # v0.9.10 : règle fixée avant les données
-        raise SystemExit(f"CALIBRATION REFUSÉE (enveloppe) : {stats['manquantes']} tirages de paires non reconstitués sur {stats['paires']} "
-                         f"({frac:.3%} > {missing_max:.3%}).")
-    out = pd.DataFrame(rows, columns=["shape", "f_in", "S"]); out.attrs["conditionnel"] = dict(stats, fraction=frac)
+        allst[f"{shape}_{f:.3f}"] = st
+        completude.check(st, missing_max, f"{shape}_{f:.3f}", diag_path, "enveloppe_S")   # v0.9.11 : par scénario, arrêt aussitôt
+    out = pd.DataFrame(rows, columns=["shape", "f_in", "S"])
+    out.attrs["conditionnel"] = {s: completude.fractions(v) for s, v in allst.items()}
     return out
 
 def _tail(s, S_obs, side):

@@ -2,6 +2,7 @@
 Lancer depuis la racine : python tests/test_acquisition.py"""
 import os, sys, tempfile
 sys.path.insert(0, os.getcwd())
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")   # v0.9.11 : console Windows (cp1252)
 import numpy as np, pandas as pd
 import acquisition as acq
 

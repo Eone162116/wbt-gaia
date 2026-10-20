@@ -8,13 +8,13 @@
   python run_wbt.py <dr3|dr4> all         enchaîne fetch, build, blind (s'arrête avant le gel)"""
 import glob, itertools, json, os, sys, time, numpy as np, pandas as pd
 from wbt_pipeline import (load_catalog, find_links, build_pairs, kinematics, hr_band, select, binned_test, BASE)
-import calibrate as cal, blind as bl, acquisition as acq
+import calibrate as cal, blind as bl, acquisition as acq, completude
 
 CFG = json.load(open("config_prereg.json", encoding="utf-8"))
 REL = sys.argv[1]; STAGE = sys.argv[2]
 P = CFG["primary"]; ST = CFG["statistic"]
 CODE = ["wbt_pipeline.py", "calibrate.py", "blind.py", "run_wbt.py", "fetch_gaia.py", "epoch_accel.py", "contamination.py",
-        "finfer.py", "acquisition.py", "validation_contamination/pgrid.npy", "validation_contamination/pgrid_dr3.npy", "config_prereg.json"]
+        "finfer.py", "acquisition.py", "completude.py", "validation_contamination/pgrid.npy", "validation_contamination/pgrid_dr3.npy", "config_prereg.json"]
 def frozen_files():
     mes = CFG["calibration"]["contamination"].get("f_in_mode") == "mesure"
     return (CODE + [f"mocks_{REL}.csv", f"envelope_{REL}.csv"] + ([f"finfer_{REL}.csv"] if mes else [])
@@ -22,7 +22,8 @@ def frozen_files():
             + ([f"eccfit_{REL}.csv", "eccfit.py"] if CFG["calibration"].get("ecc_mode") == "mesure" else [])   # v0.8
             + ([f"joint_{REL}.npz", f"joint_mocks_{REL}.csv", "jointlik.py"] if CFG["calibration"].get("joint") else [])   # v0.9
             + ([f"epoch_stats_{REL}.csv"] if REL == "dr4" else [])
-            + ([f"ACQUISITION_{REL}.json"] if REL == "dr4" or os.path.exists(f"ACQUISITION_{REL}.json") else []))   # v0.9.7-8 : obligatoire en DR4
+            + ([f"ACQUISITION_{REL}.json"] if REL == "dr4" or os.path.exists(f"ACQUISITION_{REL}.json") else [])   # v0.9.7-8 : obligatoire en DR4
+            + [f"COMPLETUDE_{REL}.json"])                                                                      # v0.9.11 : complétude gelée
 pattern = f"{REL}_*.csv" if glob.glob(f"{REL}_*.csv") else "s40_*.csv"      # s40_* = tranches DR3 de développement
 
 def log(*a):
@@ -154,7 +155,9 @@ if STAGE in ("blind", "all"):
         log(f"excentricité mesurée (angles v–r, sans |ṽ|) : α(x < {ST['x_low']}) = {bN['bas'][1]:.2f} [{bN['bas'][0]:.2f} ; {bN['bas'][2]:.2f}] ; "
             f"α(x > {ST['x_high']}) = {bN['haut'][1]:.2f} [{bN['haut'][0]:.2f} ; {bN['haut'][2]:.2f}] ; scénarios : "
             + ", ".join(f"{k} {tuple(round(a, 2) for a in v['x'])}" for k, v in ecc_sc.items()))
+    if os.path.exists(f"COMPLETUDE_{REL}.json"): os.remove(f"COMPLETUDE_{REL}.json")   # v0.9.11 : diagnostic de cette exécution
     mocks = cal.calibrate(x, vc, sv, n_mocks=nm, seed=C["seed"], ecc=C["eccentricity"], ecc_scenarios=ecc_sc,
+                          missing_max=C["conditionnel"]["manquantes_max"], diag_path=f"COMPLETUDE_{REL}.json",
                           rsky=S.rsky.values, stat_kw=dict(x_low=ST["x_low"], x_high=ST["x_high"]), vtmax=P["vtmax"], dvsky=P["dvsky"])
     mocks.to_csv(f"mocks_{REL}.csv", index=False)
     log(f"calibration : {nm} simulations par colonne ({time.time()-t:.0f} s) ; "
@@ -188,9 +191,11 @@ if STAGE in ("blind", "all"):
             + " ; ".join(f"{sh} {fs[0]:.2f}–{fs[2]:.2f}" for sh, fs in band.items()))
     env = cal.calibrate_envelope(geo, n_per_f=(CC["n_mocks_per_f"]//10 if quick else CC["n_mocks_per_f"]), seed=C["seed"], stat_kw=dict(x_low=ST["x_low"], x_high=ST["x_high"]),
                                  cfg=CC, vtmax=P["vtmax"], dvsky=P["dvsky"], scenarios=scenarios, ecc=ecc_env,
-                                 max_iter=C["conditionnel"]["max_essais"], missing_max=C["conditionnel"]["manquantes_max"])
+                                 max_iter=C["conditionnel"]["max_essais"], missing_max=C["conditionnel"]["manquantes_max"],
+                                 diag_path=f"COMPLETUDE_{REL}.json")
     env.to_csv(f"envelope_{REL}.csv", index=False)
-    st_ = env.attrs["conditionnel"]; log(f"tirage conditionnel (enveloppe) : {st_['manquantes']} tirages de paires non reconstitués sur {st_['paires']} ({st_['fraction']:.4%})")
+    log("complétude (simulations pures de S et enveloppe) : fraction maximale de paires perdues, par scénario et par zone, "
+        f"{max(max(v['fractions'].values()) for s in ('simulations_pures_S', 'enveloppe_S') for v in json.load(open(f'COMPLETUDE_{REL}.json', encoding='utf-8')).get(s, {}).values()):.4%}")
     g = env.groupby(["shape", "f_in"]).S
     log(f"enveloppe de contamination ({CC['screen']}, {time.time()-t2:.0f} s) : S newtonien moyen : "
         + ", ".join(f"{sh[:8]} {f:.2f} → {v:+.3f}" for (sh, f), v in g.mean().items())
@@ -232,14 +237,16 @@ if STAGE in ("blind", "all"):
         nJ = JC["n_par_scenario"]//(10 if quick else 1)
         scen_j = [("newton", "central", a_c, b_c, fb[sh0][1]), ("newton", "pire_newton_f_haut", a_pn, b_pn, fb[sh0][2]),
                   ("mond", "central", a_c, b_c, fb[sh0][1]), ("mond", "pire_mond_f0", a_pm, b_pm, 0.0), ("mond", "pire_mond_f_haut", a_pm, b_pm, fb[sh0][2])]
-        rows_j = []; stj = {"paires": 0, "manquantes": 0}
+        rows_j = []
         for hyp, lab, a_, b_, f_ in scen_j:
+            stj = {}
             for _ in range(nJ):
                 lv_, ps_, k_ = jl.simulate_obs_cond(geo, a_, b_, int(hyp == "mond"), f_, sh0, CC, rng_j, P["vtmax"], P["dvsky"], grid=grid_j,
                                                     max_iter=C["conditionnel"]["max_essais"], stats=stj)   # v0.9.9-10
                 rows_j.append((hyp, lab, jl.lam(lv_, ps_, k_, zs, Tj)))
-        fr_ = jl.check_completeness(stj, C["conditionnel"]["manquantes_max"], "test conjoint")
-        log(f"tirage conditionnel (test conjoint) : {stj['manquantes']} tirages de paires non reconstitués sur {stj['paires']} ({fr_:.4%})")
+            jl.check_completeness(stj, C["conditionnel"]["manquantes_max"], f"{hyp}_{lab}", f"COMPLETUDE_{REL}.json", "test_conjoint")   # v0.9.11
+        log("complétude (test conjoint) : fraction maximale de paires non reconstituées, par scénario et par zone, "
+            f"{max(max(v['fractions'].values()) for v in json.load(open(f'COMPLETUDE_{REL}.json', encoding='utf-8'))['test_conjoint'].values()):.4%}")
         Jm = pd.DataFrame(rows_j, columns=["hyp", "scenario", "lam"]); Jm.to_csv(f"joint_mocks_{REL}.csv", index=False)
         np.savez_compressed(f"joint_{REL}.npz", D=Tj["D"].astype(np.float32), cdf=Tj["cdf"], c=Tj["c"], cont=np.array([f"{s_}:{v_}" for s_, v_ in cont]))
         gj = Jm.groupby(["hyp", "scenario"]).lam

@@ -2,6 +2,7 @@
 les empreintes des fichiers attendus. Lancer depuis la racine : python tests/test_freeze.py"""
 import os, sys, tempfile, numpy as np
 sys.path.insert(0, os.getcwd())
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")   # v0.9.11 : console Windows (cp1252)
 import blind as bl
 d = tempfile.mkdtemp(); cwd = os.getcwd(); os.chdir(d)
 def refused(fn, *a):
