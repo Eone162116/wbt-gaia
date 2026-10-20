@@ -19,9 +19,9 @@ t0 = time.time()
 T = jl.templates(G, zs, b_c, CONT, CC, np.random.default_rng(777), R=R, vtmax=P["vtmax"], dvsky=P["dvsky"], grid=GRID)
 print(f"gabarits ({time.time()-t0:.0f} s)", flush=True)
 rng = np.random.default_rng(4242); fc, fh = f["raghavan2010"][1], 0.5
-sets = {"newton": [jl.simulate_obs(G, a_c, b_c, 0, fc, "raghavan2010", CC, rng, P["vtmax"], P["dvsky"], grid=GRID) for _ in range(40)],
-        "newton_f05": [jl.simulate_obs(G, a_c, b_c, 0, fh, "raghavan2010", CC, rng, P["vtmax"], P["dvsky"], grid=GRID) for _ in range(40)],
-        "mond": [jl.simulate_obs(G, a_c, b_c, 1, fc, "raghavan2010", CC, rng, P["vtmax"], P["dvsky"], grid=GRID) for _ in range(40)]}
+sets = {"newton": [jl.simulate_obs_cond(G, a_c, b_c, 0, fc, "raghavan2010", CC, rng, P["vtmax"], P["dvsky"], grid=GRID) for _ in range(40)],
+        "newton_f05": [jl.simulate_obs_cond(G, a_c, b_c, 0, fh, "raghavan2010", CC, rng, P["vtmax"], P["dvsky"], grid=GRID) for _ in range(40)],
+        "mond": [jl.simulate_obs_cond(G, a_c, b_c, 1, fc, "raghavan2010", CC, rng, P["vtmax"], P["dvsky"], grid=GRID) for _ in range(40)]}
 def contrib(parts):
     sums = [p.sum(-1, dtype=np.float64) for p, _ in parts]; out = []
     for g in (0, 1):

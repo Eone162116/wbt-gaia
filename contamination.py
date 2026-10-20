@@ -54,9 +54,26 @@ def photocentre_pm(alpha, Pyr, rng):
     tc = _TAU - _TAU.mean()
     return np.stack([(ra*tc).sum(1), (de*tc).sum(1)], 1)/(tc**2).sum()
 
+def contaminated_newton_cond(geo, f_in, rng, cfg, vtmax, dvsky, kepler_geometry_geo, max_iter=30):
+    """v0.9.9 — Réalisation newtonienne contaminée CONDITIONNÉE à la sélection : chaque paire est retirée jusqu'à passer le
+    crible et les coupes, comme la paire observée correspondante. kepler_geometry_geo(n, rng, geo_sous_ensemble).
+    Renvoie (x, ṽ) des paires retenues (toutes, sauf de rares paires encore rejetées après max_iter essais)."""
+    n = len(geo["x"]); vt = np.full(n, np.nan); kept = np.zeros(n, bool); todo = np.arange(n)
+    for _ in range(max_iter):
+        g = {k: v[todo] for k, v in geo.items()}
+        v_, k_ = _contaminated_core(g, f_in, rng, cfg, vtmax, dvsky, lambda m, r: kepler_geometry_geo(m, r, g))
+        ok = todo[k_]; vt[ok], kept[ok] = v_[k_], True; todo = todo[~k_]
+        if not len(todo): break
+    return geo["x"][kept], vt[kept]
+
 def contaminated_newton(geo, f_in, rng, cfg, vtmax, dvsky, kepler_geometry):
     """Une réalisation newtonienne contaminée. geo : dict d'arrays (x, vc, sv, d, rsky, M, m1, m2, G1, G2).
-    Renvoie (x, ṽ) des paires retenues."""
+    Renvoie (x, ṽ) des paires retenues (version non conditionnée, conservée pour les scripts de validation)."""
+    vt, keep = _contaminated_core(geo, f_in, rng, cfg, vtmax, dvsky, kepler_geometry)
+    return geo["x"][keep], vt[keep]
+
+def _contaminated_core(geo, f_in, rng, cfg, vtmax, dvsky, kepler_geometry):
+    """Cœur commun : ṽ de toutes les paires et masque des paires retenues."""
     N = len(geo["x"])
     vt_vec, _ = kepler_geometry(N, rng)
     v = vt_vec*geo["vc"][:, None]
@@ -89,4 +106,4 @@ def contaminated_newton(geo, f_in, rng, cfg, vtmax, dvsky, kepler_geometry):
     v = observe(v*np.sqrt(1 + M_hidden/geo["M"])[:, None] + kick, geo["sv"], rng)
     va = np.linalg.norm(v, axis=1); vt = va/geo["vc"]
     keep = (vt < vtmax) & (va < dvsky) & ~removed
-    return geo["x"][keep], vt[keep]
+    return vt, keep

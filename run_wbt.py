@@ -233,7 +233,7 @@ if STAGE in ("blind", "all"):
         rows_j = []
         for hyp, lab, a_, b_, f_ in scen_j:
             for _ in range(nJ):
-                lv_, ps_, k_ = jl.simulate_obs(geo, a_, b_, int(hyp == "mond"), f_, sh0, CC, rng_j, P["vtmax"], P["dvsky"], grid=grid_j)
+                lv_, ps_, k_ = jl.simulate_obs_cond(geo, a_, b_, int(hyp == "mond"), f_, sh0, CC, rng_j, P["vtmax"], P["dvsky"], grid=grid_j)   # v0.9.9
                 rows_j.append((hyp, lab, jl.lam(lv_, ps_, k_, zs, Tj)))
         Jm = pd.DataFrame(rows_j, columns=["hyp", "scenario", "lam"]); Jm.to_csv(f"joint_mocks_{REL}.csv", index=False)
         np.savez_compressed(f"joint_{REL}.npz", D=Tj["D"].astype(np.float32), cdf=Tj["cdf"], c=Tj["c"], cont=np.array([f"{s_}:{v_}" for s_, v_ in cont]))

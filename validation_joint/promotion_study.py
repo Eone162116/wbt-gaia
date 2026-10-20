@@ -34,7 +34,7 @@ T = jl.templates(G, zones1, b_c, CONT, CC, rng, R=30, vtmax=P["vtmax"], dvsky=P[
 print(f"gabarits : {T['D'].shape} ({time.time()-t0:.0f} s)", flush=True)
 
 def dataset(Gs, zs, a, b, g, fin, shape, mb=1.0):
-    lv, ps, k = jl.simulate_obs(Gs, a, b, g, fin, shape, CC, rng, P["vtmax"], P["dvsky"], mass_bias=mb, grid=GRID)
+    lv, ps, k = jl.simulate_obs_cond(Gs, a, b, g, fin, shape, CC, rng, P["vtmax"], P["dvsky"], mass_bias=mb, grid=GRID)
     Sv = np.median(10**lv[zs["haut"]][k[zs["haut"]]])/np.median(10**lv[zs["bas"]][k[zs["bas"]]]) - 1
     return jl.lam(lv, ps, k, zs, T), Sv
 

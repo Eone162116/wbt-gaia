@@ -17,7 +17,7 @@ from common import load_inputs, provenance
 t0 = time.time(); REL = sys.argv[1] if len(sys.argv) > 1 else "dr3"
 I = load_inputs(REL); P, CC, GRID, R, G, zs, a_c, b_c, f, CONT = (I[k] for k in ("P", "CC", "GRID", "R", "G", "zs", "a_c", "b_c", "f", "CONT"))
 rng = np.random.default_rng(910)                          # jeux d'ÉVALUATION (graine distincte des jeux de réglage)
-mocks = [(g, jl.simulate_obs(G, a_c, b_c, g, f["raghavan2010"][1], "raghavan2010", CC, rng, P["vtmax"], P["dvsky"], grid=GRID))
+mocks = [(g, jl.simulate_obs_cond(G, a_c, b_c, g, f["raghavan2010"][1], "raghavan2010", CC, rng, P["vtmax"], P["dvsky"], grid=GRID))
          for g in [0]*10 + [1]*10]
 L = np.zeros((5, len(mocks))); infl = np.zeros(len(mocks))
 for s in range(5):

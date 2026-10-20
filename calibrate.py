@@ -121,11 +121,11 @@ def calibrate_envelope(geo, n_per_f=20000, seed=0, stat_kw=None, cfg=None, vtmax
     import contamination as ct
     rng = np.random.default_rng(seed + 1); stat_kw = stat_kw or {}; rows = []
     scenarios = scenarios or [(cfg.get("shape", "raghavan2010"), f) for f in cfg["f_in"]]
-    kg = lambda n, r: kepler_geometry(n, r, ecc, geo.get("rsky"), geo["x"])     # v0.8 : excentricité la plus défavorable à Newton
+    kgg = lambda n, r, g: kepler_geometry(n, r, ecc, g.get("rsky"), g["x"])   # v0.8 ; v0.9.9 : sur le sous-ensemble tiré
     for shape, f in scenarios:
         c = dict(cfg, shape=shape)
         for _ in range(n_per_f):
-            xx, vv = ct.contaminated_newton(geo, f, rng, c, vtmax, dvsky, kg)
+            xx, vv = ct.contaminated_newton_cond(geo, f, rng, c, vtmax, dvsky, kgg)   # v0.9.9 : N simulé = N observé
             rows.append((shape, f, step_stat(xx, vv, **stat_kw)))
     return pd.DataFrame(rows, columns=["shape", "f_in", "S"])
 

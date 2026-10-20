@@ -82,6 +82,20 @@ def sub(G, idx, rep=1):
     k = np.tile(idx, rep); return {key: (val[k] if np.ndim(val) == 1 else val[k]) for key, val in G.items()}
 
 
+def simulate_obs_cond(G, *args, max_iter=30, **kw):
+    """v0.9.9 — Jeu simulé CONDITIONNÉ à la sélection : chaque paire de la géométrie observée est retirée jusqu'à passer les
+    mêmes coupes que les données (crible de contamination, ṽ < vtmax, Δv sur le ciel). Raison : la géométrie observée a déjà
+    passé ces coupes ; en retirant les paires simulées détectées, les jeux simulés gardaient 65 à 76 % des paires (DR3).
+    Échantillonnage par rejet, paire par paire (les paires sont indépendantes à géométrie donnée) : la loi de chaque paire est
+    exactement sa loi conditionnelle. Après max_iter essais, les rares paires restantes sont marquées non retenues.
+    Mêmes arguments que simulate_obs ; renvoie (log ṽ, ψ, retenue)."""
+    n = len(G["x"]); lv = np.full(n, np.nan); ps = np.full(n, np.nan); kept = np.zeros(n, bool); todo = np.arange(n)
+    for _ in range(max_iter):
+        a, b, k = simulate_obs(sub(G, todo), *args, **kw)
+        ok = todo[k]; lv[ok], ps[ok], kept[ok] = a[k], b[k], True; todo = todo[~k]
+        if not len(todo): break
+    return lv, ps, kept
+
 def _density(lv, ps):
     """Densité lissée non tronquée sur la grille fine (par dex et par degré) et sa fonction de répartition en log ṽ."""
     e_lv = np.r_[LVG - DLV/2, LVG[-1] + DLV/2]; e_ps = np.r_[PSG - DPS/2, PSG[-1] + DPS/2]
