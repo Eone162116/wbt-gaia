@@ -1,0 +1,176 @@
+{
+ "debut": "2026-10-20T09:56:41",
+ "mode": "complet",
+ "dossier": "C:\\Users\\Utilisateur\\Documents\\wbt-gaia-EXERCICE-DR4-20261020-095641",
+ "etapes": {
+  "faux_catalogue": {
+   "minutes": 1.4,
+   "tranches": 84
+  },
+  "build": {
+   "minutes": 1.2,
+   "code_retour": 0,
+   "fin_sortie": [
+    "2877863 étoiles, 241942 liens, 100949 paires mutuelles ; crible DR4 étoile : 0.921",
+    "flags lus dans C:\\Users\\Utilisateur\\Documents\\wbt-gaia-EXERCICE-DR4-20261020-095641\\EXERCICE_flags_dr4.csv (au lieu de la requête TAP) ; sha256 ee3666847691372d",
+    "flags récupérés pour 56476 sources sur 56476 demandées (0 absentes, 0 incomplètes : non propres) ; paires candidates propres : 0.886"
+   ]
+  },
+  "epoques_synthetiques": {
+   "minutes": 4.2,
+   "composantes_candidates": 21546,
+   "avec_donnees": 20499,
+   "acceleration_injectee": 3085,
+   "transits_par_source": 40
+  },
+  "epoch": {
+   "minutes": 10.8,
+   "code_retour": 0,
+   "fin_sortie": [
+    "crible par époques : téléchargement pour 21546 composantes (≈ 3.2 Go en RAW)",
+    "crible par époques : 21546 composantes candidates, 20499 avec données, 3142 signalées ; paires candidates : propre 0.646, signalé 0.271, manquant 0.083"
+   ]
+  },
+  "blind": {
+   "minutes": 84.8,
+   "code_retour": 0,
+   "fin_sortie": [
+    "test conjoint (1770 s, 5000 simulations par scénario) : Λ moyen ± σ mond/central +2.9 ± 3.2, mond/pire_mond_f0 +0.8 ± 3.9, mond/pire_mond_f_haut +0.5 ± 2.8, newton/central -1.8 ± 2.8, newton/pire_newton_f_haut -1.1 ± 3.1",
+    "contrôles avant levée : permutation OK ; injection OK ; effectifs ÉCHEC ; f_in_comparaison OK",
+    "blind terminé : marqueur de complétude écrit"
+   ]
+  },
+  "freeze": {
+   "minutes": 0.1,
+   "code_retour": 0,
+   "fin_sortie": [
+    "gel enregistré : 2026-10-20T09:39:07Z manifeste 3666d1fbc1049882"
+   ]
+  },
+  "unblind": {
+   "minutes": 0.1,
+   "code_retour": 0,
+   "fin_sortie": [
+    "  }",
+    " }",
+    "}"
+   ]
+  },
+  "multiverse": {
+   "minutes": 0.1,
+   "code_retour": 0,
+   "fin_sortie": [
+    "multivers : 432 spécifications ; S médian +0.066 ; part S > +0,075 : 0.41"
+   ]
+  }
+ },
+ "controles": {
+  "crible par époques appliqué": true,
+  "flags lus depuis le fichier": true,
+  "f_in mesuré avec le drapeau DR4": true,
+  "comparaison f_in époques/RUWE faite": true,
+  "mode complet (pas de mode rapide)": true,
+  "marqueur de complétude écrit": true,
+  "gel et levée": true,
+  "test conjoint calculé": true,
+  "multivers DR4 (crible et époques inclus)": true,
+  "sources de données consignées et gelées": true
+ },
+ "commit": "741b883500baeb8dd1c2b5f4aa2c2ba60cdb8e0e",
+ "depot_modifie": false,
+ "empreintes_copiees": {
+  ".gitattributes": "4597b5be8e3a3bc24c27d1d2ee6ca3ca6eb9941598510d688a9d9082c5d077b5",
+  ".gitignore": "58f76726ed630dd21a4d7cd99a01e3ffc5113f89b01ede730b370c66a4f98090",
+  "LICENSE": "6879e9ba2f62edb727067bff027df54b6c5dee16240e7cf2b71eba06d4b30ec3",
+  "README.md": "9092db92984d04f1766ce2f2de501fea21055bc26dea4c939b7da7509407b985",
+  "acquisition.py": "20fdd17a352c38a8138976af6642302ea4dcb5e4dc4c4eed9a40be4de0dfa9ca",
+  "blind.py": "f19fe0759bf74f4f27a90aa4ebf7f547f8506cdaa74ccab9f61d9fa908977859",
+  "calibrate.py": "0f8bc1de6a9abf120d6b4e80fbbba26178b06505403d82f2429f19d24d25fca8",
+  "config_prereg.json": "764c07cffd5f65a9052cdaed5ac225681bac3397f006738a0966a2dadc98362c",
+  "contamination.py": "c49fab7cee8ef228846aa2d9bd3510867f8441435fd50a28a00751af13d246be",
+  "eccfit.py": "1b70e28751fb03d9964743538ecf1a6219d555779580c276dac6127dfdd0d463",
+  "epoch_accel.py": "a6ed8cca4f5bfb0fb7f39d9993217f8f1a37fc5eb295c8326feef379706c7fff",
+  "exploration_dr3/README.md": "28f02d8f0a696c1beb8736bbfc4b13fafb324ed61f1eed48a044569ebd86d01a",
+  "exploration_dr3/build_pairs.py": "3cceface6c575c69034b88a002e1fd475925b020a01039c906142ce47dd011d3",
+  "exploration_dr3/fetch_gaia.py": "13b61580189f3e79bd6d5aca12a1c80a1dfee152e54c6c4a6dba171b9c6df715",
+  "exploration_dr3/fig_baseline_vs_nodegroup.png": "cc5bcd33192e490c627a3377f1d99631f1f75a9f9cb4572b26db27610c86cb93",
+  "exploration_dr3/fig_injection_recovery.png": "b093cd2d1c1e0484d3cce292c286a1508b7d39f8bd1baf50964d10782043dc2a",
+  "exploration_dr3/fig_specification_curve.png": "fc01bc27b2172a81a3db55662785f08812dee3d237ec7ba6cabb01f284aba99c",
+  "exploration_dr3/injection_recovery.py": "ccfb767c0fce8647d680084b5a0065b68dd8a6d00f27de2da4ae9cc24002b601",
+  "exploration_dr3/injection_summary.csv": "d0506c1b1a9552f2697b81aa8e50d2f12865bc3dfda01831fa698fe7b0f72269",
+  "exploration_dr3/multiverse_factor_effects.csv": "f82ed57d9afd61a22bdf887a603fcf6a582f744d38abb93000b91b31dbda6f16",
+  "exploration_dr3/multiverse_results.csv": "396a7d4eb78bc2a2b3c9fa7b7375ffc281a640823d11a0615271e788a0a39baa",
+  "exploration_dr3/run_multiverse.py": "380d474546869c7883265244fdb0e650c062f483c120dd3105aae71b28b06b04",
+  "exploration_dr3/wbt_pipeline.py": "12ca25ff3b05ac15946dec4f1619e9b6b82fee8d6c1f6e220817d22d2c4960cc",
+  "fetch_gaia.py": "63df55c9617ee0e49dcfd7c37e7310a73e51cde0aecfa649f0f399b8a6de53e4",
+  "finfer.py": "54c0a3d6c9da2e164a24eadb79d8e698f4eec1883c27edbaa604e6503928086c",
+  "jointlik.py": "0b9bfc215792d58b744fcbac6a10b0cb47c0cdd51f3b56d6f2691309286317b4",
+  "requirements.txt": "a3481894ae4a218faecf8a4110189d3806f01b939562e13dcaf174bd146f045b",
+  "run_wbt.py": "61c2dc58540d91cffc82722efa199dd693bfece9eb49f26f93c3185f256b949a",
+  "tests/test_acquisition.py": "c226afb51c9ec3b666e5e3feb23096029780bbe3d0a0f8279db4d2e54fc3019b",
+  "tests/test_mond_eq7.py": "7b58bed529d26ac05f61308c2603af945f40985dabe1fdc8e93d921a9d2fe321",
+  "tools/exercice_dr4.py": "84690b076a4430a9fd7594a07b659f328fc5f6cb0c98911699bfe23820bafc2a",
+  "validation_calibration/mass_sensitivity.py": "3d774a3202f2011ceec8a8d96e3af2357843f45e2620393c152a70fb64969f22",
+  "validation_calibration/mass_sensitivity_dr3.csv": "c6d6c1f9e501988732676d3b94b22765313d56d55415b4568373e790a57fcf34",
+  "validation_calibration/sigma_threshold_dr3.csv": "36a46e8cb4b73ca02f3acc39c8006f66edf04e7061885fcb80191ca9a2423c5a",
+  "validation_calibration/sigma_threshold_study.py": "96ecb74ece6f48b210440e83d6740a34b59a80eba30bacba08b80f96d3cc5c00",
+  "validation_contamination/README.md": "4d6248f6fcb4b29e1454e2d2ec1580d6a2431ed109eae825f7bced2023a104fc",
+  "validation_contamination/contamination_model.py": "50b9668426ded360ec593be0f35087a240d270b1324428342028903341dc5a74",
+  "validation_contamination/contamination_results.csv": "b31190ff78187ea6f5fd26118681e394eb97dad51a9dd667f028614701b37fca",
+  "validation_contamination/envelope_study.csv": "0409b2462465658cc9e397502ccaca44197d1b098bc236cb7fc0cce9e3019462",
+  "validation_contamination/envelope_study.py": "40a5eaedf4b6f6521960a2eed4eea2272456e2021a1d59f078c34e575c29d6e4",
+  "validation_contamination/epoch_grid.py": "e430240ad246eba88dee6c5e0d4193c782e0388997391f5043137bde99fee8bc",
+  "validation_contamination/epoch_grid_dr3.py": "3946b0d38fd78a3ffb7d03ac62bdc088baaa61a9979d6f6b1010b9a0d40a8cc8",
+  "validation_contamination/fig_contamination_bias.png": "1d601a3aafad8942be4ba7a6b9e85ea0d8b3ccb9be63c1e532e41567495d52b4",
+  "validation_contamination/pgrid.npy": "8bb4ebefaf8b581b2f71adcf01ea6141b85380068bd78f25ee5c246262b5b6c0",
+  "validation_contamination/pgrid_dr3.npy": "54dff79c0354bc4fbcea00b50818aeb01316527b70fb80f2721e3507989c255c",
+  "validation_contamination/power_v06.py": "de4b04b74b4bc3e3c81f8460d89fe1c239191e8ffb1c238ae17ca146679311be",
+  "validation_contamination/power_v06_sortie.txt": "e907e507708af610404f90692e6129a61c150d783d11c9e198228b46c80c29bd",
+  "validation_contamination/quantile_study.csv": "d0e41d1aaf1bfeac4e7c763fc87f20b7120fddb7440beac4e9a4ceb73a3dfffe",
+  "validation_contamination/quantile_study.py": "1c5784cb2c7bc48f4c56a51c337857e53d2c1f8ac9fa80afcf2af4f75fc116cb",
+  "validation_eccentricity/beta_effect.csv": "aa1e4138192076b763bda2a4636efe479a9031ec5bad1b9b5251685ca91bf472",
+  "validation_eccentricity/ecc_injection.py": "64c53f9168addc73af4a76eb39d77c06c22c04f85b8e5a75b7350dc9f8751dfe",
+  "validation_eccentricity/ecc_injection_dr3.csv": "9eb28d9d23b0debb605448b3b6ebacc78fcf5b45b99ea2bd4510c5e82a979a25",
+  "validation_epoch/README.md": "9b89b41987331e35835ce1dec960368b273d3e421f8b6f3b0684f726639a5dad",
+  "validation_epoch/coverage_gap.csv": "b939eb1fd97ad5746b5d5464cf21096a201e9cbf820c46a2721a174f531b8139",
+  "validation_epoch/coverage_map.py": "f17e4d48f9164b1a3eeff65b373affab26e72c43213d88d5616f21263a1711ca",
+  "validation_epoch/fig_coverage_gap.png": "b034929ee0a54003240c0d428b93566b9d1c53542ee38744599b08519b1094aa",
+  "validation_epoch/fig_epoch_detection.png": "d65f1296ee2389abd8e16ef23b0161c41582041997f5b482297207d3fbce2fc5",
+  "validation_epoch/injection_companions.csv": "a0b50075d9809b741bd4696d7b6349517b7be1cfddf7e10575472c78c8b6fc0d",
+  "validation_epoch/prerelease_classification.csv": "651e07b920beba5b7774833b39e7bcc470b2b821a49ddfc6299ff1e7b2b70c49",
+  "validation_epoch/validate_epoch.py": "9e5f32fa06f7bb9ec2dbeb7f48810bf580a6aebf197df3ee2c704e0615de303c",
+  "validation_joint/README.md": "a323a6fdd144dbc1d94cdfad772948ad3a759c71524ea5d9bd416f9de666ca1d",
+  "validation_joint/archive_eta001/README.md": "36e7c89239b2d609a1567725f04c3c0598ee88d7bad79ad61758480e38cb73c1",
+  "validation_joint/archive_eta001/power_origin_dr3.txt": "1523b949f334c2f0f63b22d09a923ec89764a5e2cc7463487e7429b7992dd259",
+  "validation_joint/archive_eta001/promotion_dr3.csv": "5cfe2ff39ceb15378e4136318aec2b147f84a1ea051c7e0b68f387e5381f1e32",
+  "validation_joint/archive_eta001/stability_dr3.csv": "d08a3505968074049b663a9f2ec7f9b41d15ab23c48c499037436b129f7dd3fd",
+  "validation_joint/archive_mode_rapide/README.md": "2b3d2a3ee14893dba3664377f34d5847d9e3ed180a2973870af91e57ece52b25",
+  "validation_joint/archive_mode_rapide/power_origin_dr3.txt": "7c5f1aea7b70d0f1c61a3129877741d8958aeef1f2e74e9702d0f1b6b6b61d29",
+  "validation_joint/archive_mode_rapide/power_origin_dr3_provenance.json": "91682e52e0a127fb23ea631c225d3888ff8892750adc7546fc3f089fcc22f2fe",
+  "validation_joint/archive_mode_rapide/promotion_dr3.csv": "b0edb524ea4b8871d7b80f354cbd3bf19ff83cf9892612174981725f00d69e99",
+  "validation_joint/archive_mode_rapide/stability_dr3.csv": "f4f35522a2095f8d6e082c7cef90bd9a9c4e5a2dde4bf997b7e4220a2c646b94",
+  "validation_joint/archive_mode_rapide/stability_dr3_provenance.json": "1ff5e631444776cd8779104bc9899390b22483c079806bce97a5c0bbe7228224",
+  "validation_joint/common.py": "cd069476a40514bc4e93f1f00e3c8a5ce49be8f52af7a3407eea4cdff3b821e2",
+  "validation_joint/joint_power.py": "c1548c7704b11d6114066a7b908dc8cf52ce519471c7a8bb03f025d6631329c7",
+  "validation_joint/joint_power_dr3.csv": "4252b8bd7ad4271661741a2ce36654bcb9237bf052b7b3a00625c6b91ba3e0f2",
+  "validation_joint/power_origin.py": "c3aecd4683eba9c13dd309ec028d4b09d65e7feb6d8e6f20c376e7c5416b4cf9",
+  "validation_joint/power_origin_dr3.txt": "2edbf8fb8f939e3fa3dc5f762dee2408155dbb00d12bb4df266668a941016644",
+  "validation_joint/power_origin_dr3_provenance.json": "aab4092fb84263c224dc47093000e591c6eef0d2e86e6b19a12655cadcd5ac4e",
+  "validation_joint/promotion_dr3.csv": "cc007d4978eff32e758c3b6012a2b835c8d6c5ebb2086bdf360f28a7f4c9e43a",
+  "validation_joint/promotion_study.py": "92e92101160afd447135b2826895347319245a7d20ec67382c0f1f66b7f5f6be",
+  "validation_joint/stability_dr3.csv": "b4bc7e51921bdcb576d6beba8acab1f8de0f00a9963fad744b123d65b65139eb",
+  "validation_joint/stability_dr3_provenance.json": "a9507099d94b1f8db6d782bc2eb7a563fb7f2affb92650dcb4693f3059176156",
+  "validation_joint/stability_study.py": "2aaea106270a80695ed75772cdc279d73c79276698e3f8cd49663b1798fc1ffc",
+  "wbt_pipeline.py": "8f6523ad90363323dbec8dbcbcbc1323e688c1f7782a5336b10757dbfffe153e"
+ },
+ "avertissement": "Faux DR4 : vitesses, positions et parallaxes DR3 réelles, filtrées par des drapeaux et une astrométrie par époque inventés. Le S de l'exercice n'a aucune valeur physique. Une VOTable synthétique lisible ne valide pas le format réel de DataLink DR4, à contrôler le jour J (audit F10).",
+ "resultat_sans_valeur_physique": {
+  "N": 568,
+  "verdict": "Non concluant — étude déclarée sous-dimensionnée — zone de x sous-dimensionnée",
+  "S_obs": 0.04693249364213026
+ },
+ "fin": "2026-10-20T11:39:19",
+ "duree_totale_min": 102.6,
+ "succes": true,
+ "motif": ""
+}

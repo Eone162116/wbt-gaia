@@ -1,0 +1,38 @@
+EXERCICE DR4 À BLANC (complet) — dossier C:\Users\Utilisateur\Documents\wbt-gaia-EXERCICE-DR4-20261020-095641 — commit 741b883 — résultats sans valeur physique
+faux catalogue DR4 : 84 tranches (1.4 min)
+--- étape build ---
+    2877863 étoiles, 241942 liens, 100949 paires mutuelles ; crible DR4 étoile : 0.921
+    flags lus dans C:\Users\Utilisateur\Documents\wbt-gaia-EXERCICE-DR4-20261020-095641\EXERCICE_flags_dr4.csv (au lieu de la requête TAP) ; sha256 ee3666847691372d
+    flags récupérés pour 56476 sources sur 56476 demandées (0 absentes, 0 incomplètes : non propres) ; paires candidates propres : 0.886
+    build : code 0, 1.2 min
+astrométrie par époque synthétique : 20499 composantes sur 21546, 3085 avec accélération injectée (4.2 min)
+--- étape epoch ---
+    crible par époques : téléchargement pour 21546 composantes (≈ 3.2 Go en RAW)
+    crible par époques : 21546 composantes candidates, 20499 avec données, 3142 signalées ; paires candidates : propre 0.646, signalé 0.271, manquant 0.083
+    epoch : code 0, 10.8 min
+--- étape blind ---
+    test conjoint (1770 s, 5000 simulations par scénario) : Λ moyen ± σ mond/central +2.9 ± 3.2, mond/pire_mond_f0 +0.8 ± 3.9, mond/pire_mond_f_haut +0.5 ± 2.8, newton/central -1.8 ± 2.8, newton/pire_newt
+    contrôles avant levée : permutation OK ; injection OK ; effectifs ÉCHEC ; f_in_comparaison OK
+    blind terminé : marqueur de complétude écrit
+    blind : code 0, 84.8 min
+--- étape freeze ---
+    gel enregistré : 2026-10-20T09:39:07Z manifeste 3666d1fbc1049882
+    freeze : code 0, 0.1 min
+--- étape unblind ---
+      }
+     }
+    }
+    unblind : code 0, 0.1 min
+--- étape multiverse ---
+    multivers : 432 spécifications ; S médian +0.066 ; part S > +0,075 : 0.41
+    multiverse : code 0, 0.1 min
+  OK  crible par époques appliqué
+  OK  flags lus depuis le fichier
+  OK  f_in mesuré avec le drapeau DR4
+  OK  comparaison f_in époques/RUWE faite
+  OK  mode complet (pas de mode rapide)
+  OK  marqueur de complétude écrit
+  OK  gel et levée
+  OK  test conjoint calculé
+  OK  multivers DR4 (crible et époques inclus)
+  OK  sources de données consignées et gelées
