@@ -1,0 +1,33 @@
+{
+ "date": "2026-10-20T18:35:17",
+ "release": "dr3",
+ "script": "exploration_dr3/decomposition_lambda.py",
+ "commit": "e741ecb17b9d614bc5e05d59974db5d90ef6133d",
+ "depot_modifie": true,
+ "graines": {
+  "gabarits": 20261211,
+  "jeux": 4343
+ },
+ "jointlik": {
+  "H_LV": 0.06,
+  "H_PS": 6.0,
+  "EPS": 0.01,
+  "n_eta": 21,
+  "pas_eta": 0.0050000000000000044,
+  "n_alpha_fin": 31
+ },
+ "numpy": "2.5.4",
+ "pandas": "3.0.6",
+ "sha256": {
+  "K_dr3.pkl": "55e69d77aa466a2c0e3423c337c50bf341c86dacdafdfa2d765cf52f8701b4aa",
+  "eccfit_dr3.csv": "558a3fbf9d499d06774ec1eeeae74e10e96c3939837d094cc63aaa59b247ac0e",
+  "finfer_dr3.csv": "028af47e1545d915538a29bb02db77a124288edab1b4b7f42ae680d617a50d10",
+  "jointlik.py": "1bd70fdb45fd871ef8039ea4963a979ec870f4ce6d1f64a9901b928de94ca7da",
+  "config_prereg.json": "88afc4552c6efcf39d2ba7370f872a83acc6dc2cbd958d33e1c2575048f59ca5",
+  "validation_joint/common.py": "cd069476a40514bc4e93f1f00e3c8a5ce49be8f52af7a3407eea4cdff3b821e2",
+  "exploration_dr3/decomposition_lambda.py": "c101c16ec8bf7371c046dc41af31e1c6254bcd268f16239223d020a8e4037187"
+ },
+ "R": 90,
+ "n_jeux_par_hypothese": 100,
+ "statut": "exploratoire, après levée et clôture ; aucune décision n'en dépend"
+}
