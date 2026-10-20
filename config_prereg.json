@@ -280,5 +280,9 @@
     "rang_principale": 0.58,
     "effets_moyens": "sans dégroupage S ≈ +0,149 contre ≈ +0,05 avec (−0,10) ; correction sphérique −0,016 ; filtre HR +0,012 à +0,016 ; dmax 150 pc +0,034 et 200 pc +0,006 (référence 130 pc) ; RUWE 1,4 +0,006 ; modèle additif, résidu 0,019",
     "lecture": "Le dégroupage domine : sans lui, S prend des valeurs d'allure MOND sur DR3. Les autres choix déplacent S de moins de 0,035."
+  },
+  "acquisition": {
+    "drapeaux_absents_max": 0.005,
+    "_comment": "v0.9.8 (audit du 20/10/2026) : si, après deux requêtes TAP, plus de 0,5 % des drapeaux all_source_flags demandés manquent, l'acquisition s'arrête (plan B : fichier téléchargé à part, lu strictement). En dessous, les sources sans drapeau sont comptées non propres et leur nombre est consigné dans ACQUISITION_<rel>.json. Règle fixée avant les données DR4, indépendante des vitesses."
   }
 }

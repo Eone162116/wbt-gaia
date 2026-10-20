@@ -22,7 +22,7 @@ def frozen_files():
             + ([f"eccfit_{REL}.csv", "eccfit.py"] if CFG["calibration"].get("ecc_mode") == "mesure" else [])   # v0.8
             + ([f"joint_{REL}.npz", f"joint_mocks_{REL}.csv", "jointlik.py"] if CFG["calibration"].get("joint") else [])   # v0.9
             + ([f"epoch_stats_{REL}.csv"] if REL == "dr4" else [])
-            + ([f"ACQUISITION_{REL}.json"] if os.path.exists(f"ACQUISITION_{REL}.json") else []))   # v0.9.7 : sources de données
+            + ([f"ACQUISITION_{REL}.json"] if REL == "dr4" or os.path.exists(f"ACQUISITION_{REL}.json") else []))   # v0.9.7-8 : obligatoire en DR4
 pattern = f"{REL}_*.csv" if glob.glob(f"{REL}_*.csv") else "s40_*.csv"      # s40_* = tranches DR3 de développement
 
 def log(*a):
@@ -40,7 +40,10 @@ if STAGE in ("fetch", "all"):
     import fetch_gaia as fg
     fg.fetch_catalog(REL); ok = fg.check_complete(REL); log("catalogue complet :", ok, "; serveur TAP :", fg.TAP_URL)
     acq.record(REL, "catalogue", serveur=fg.TAP_URL, schema=CFG["tap"]["schema"][REL], complet=bool(ok),
-               n_tranches=len(glob.glob(f"{REL}_*.csv")), n_serveur=fg.server_count(REL))   # v0.9.7
+               n_serveur=fg.server_count(REL), colonnes=fg.columns(REL), snr_min=CFG["tap"]["snr_catalog"],
+               requete=f"SELECT <colonnes> FROM {CFG['tap']['schema'][REL]}.gaia_source WHERE parallax >= <lo> AND parallax < <hi> "
+                       f"AND parallax_over_error > {CFG['tap']['snr_catalog']}",
+               tranches=acq.inventory(f"{REL}_*.csv"))   # v0.9.7-8 : serveur, requête et inventaire daté des tranches
     if not ok: raise SystemExit(f"Catalogue incomplet : lance « python fetch_gaia.py repair {REL} » puis relance fetch.")   # v0.9.1
 
 if STAGE in ("build", "all"):
@@ -58,7 +61,15 @@ if STAGE in ("build", "all"):
             log(f"flags lus dans {pth} (au lieu de la requête TAP) ; sha256 {src['sha256'][:16]}")
         else:
             F = fg.fetch_extra(REL, ids, CFG["flags_table"]["table"], CFG["flags_table"]["columns"]).set_index("source_id")
-            src = dict(source="TAP", serveur=fg.TAP_URL, table=CFG["flags_table"]["table"])
+            miss = np.setdiff1d(np.unique(ids), F.index.values)
+            if len(miss):                          # v0.9.8 : une seconde requête pour les identifiants manquants
+                F2 = fg.fetch_extra(REL, miss, CFG["flags_table"]["table"], CFG["flags_table"]["columns"]).set_index("source_id")
+                F = pd.concat([F, F2[~F2.index.isin(F.index)]]); miss = np.setdiff1d(np.unique(ids), F.index.values)
+            fmax = CFG.get("acquisition", {}).get("drapeaux_absents_max", 0.005)
+            if len(miss) > fmax*nd:                # règle fixée avant les données, indépendante des vitesses
+                raise SystemExit(f"ARRÊT : {len(miss)} drapeaux absents sur {nd} ({len(miss)/nd:.2%} > {fmax:.1%}) après deux requêtes. "
+                                 "Plan B : télécharger all_source_flags pour ces sources et relancer build avec WBT_FLAGS_FILE.")
+            src = dict(source="TAP", serveur=fg.TAP_URL, table=CFG["flags_table"]["table"], absents_max=fmax)
         ok = acq.flags_ok(F)                      # v0.9.7 : drapeau inconnu (vide, NaN) = non propre
         n_inc = int(F[list(acq.FLAG_COLS)].isna().any(axis=1).sum()); n_abs = nd - int(F.index.isin(np.unique(ids)).sum())
         K["flags_ok"] = ok.reindex(K.sid1).fillna(False).values & ok.reindex(K.sid2).fillna(False).values
@@ -97,6 +108,7 @@ if STAGE == "epoch" or (STAGE == "all" and REL == "dr4"):
     K.to_pickle(f"K_{REL}.pkl")
 
 if STAGE in ("blind", "all"):
+    if REL == "dr4": acq.require(REL)          # v0.9.8 : provenance complète exigée avant toute calibration
     if os.path.exists(f"BLIND_{REL}_complete.json"): os.remove(f"BLIND_{REL}_complete.json")   # v0.9.4 : invalidé tant que blind n'est pas fini
     K = pd.read_pickle(f"K_{REL}.pkl"); m, vt, b = primary_selection(K)
     if P.get("epoch") and "epoch_ok" not in K.columns:      # v0.7-D : bloquant sur DR4
@@ -237,6 +249,7 @@ def frozen_arrays():
     return dict(sample_ids=np.sort(np.concatenate([s.sid1.values, s.sid2.values]).astype(np.int64)))
 
 if STAGE == "freeze":
+    if REL == "dr4": acq.require(REL)          # v0.9.8
     files = frozen_files()
     bl.check_completion(f"BLIND_{REL}_complete.json", files)   # v0.9.4 : pas de gel d'un blind incomplet
     man = bl.freeze(f"FREEZE_{REL}.json", files, frozen_arrays())

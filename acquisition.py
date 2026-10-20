@@ -3,7 +3,8 @@
   colonnes présentes, source_id uniques, tous les identifiants demandés présents, valeurs numériques ; sinon ARRÊT.
 - flags_ok(F) : propre seulement si les deux drapeaux valent 0 ; un drapeau vide ou NaN est inconnu, donc NON propre.
 - record(rel, section, **info) : ACQUISITION_<rel>.json, journal durable des sources de données (serveur interrogé,
-  fichiers de repli et leurs empreintes, effectifs). Ce fichier est gelé avec le reste (run_wbt.frozen_files)."""
+  fichiers de repli et leurs empreintes, effectifs, inventaire des tranches), avec historique des réécritures (v0.9.8).
+  Obligatoire en DR4 (require), et gelé avec le reste (run_wbt.frozen_files)."""
 import json, os, time
 import numpy as np, pandas as pd
 
@@ -30,9 +31,29 @@ def flags_ok(F):
     """Propre seulement si les deux drapeaux valent 0 ; vide ou NaN = inconnu = non propre (v0.9.7)."""
     return (F[FLAG_COLS[0]] == 0) & (F[FLAG_COLS[1]] == 0)
 
+REQUIRED_DR4 = ("catalogue", "drapeaux", "epoques")     # v0.9.8 : sections exigées avant « blind » et « freeze » en DR4
+
 def record(rel, section, **info):
+    """Écrit une section ; une version antérieure différente de la même section est conservée dans « historique » (v0.9.8)."""
     p = f"ACQUISITION_{rel}.json"
     d = json.load(open(p, encoding="utf-8")) if os.path.exists(p) else {}
+    if section in d:
+        prev = dict(d[section]); prev.pop("historique", None); hist = d[section].get("historique", [])
+        info["historique"] = hist + [prev]
     d[section] = dict(date_utc=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), **info)
     json.dump(d, open(p, "w", encoding="utf-8", newline="\n"), indent=2, ensure_ascii=False, default=str)
     return d
+
+def require(rel, sections=REQUIRED_DR4):
+    """v0.9.8 : arrêt si le journal d'acquisition manque ou s'il lui manque une section exigée."""
+    p = f"ACQUISITION_{rel}.json"
+    if not os.path.exists(p): raise SystemExit(f"ARRÊT : {p} absent ; la provenance des données est obligatoire en {rel.upper()}.")
+    d = json.load(open(p, encoding="utf-8")); miss = [s for s in sections if s not in d]
+    if miss: raise SystemExit(f"ARRÊT : sections absentes de {p} : {miss} (relancer l'étape correspondante : fetch, build ou epoch).")
+    return d
+
+def inventory(pattern):
+    """v0.9.8 : inventaire des tranches du catalogue (fichier, octets, SHA-256 avec fins de ligne normalisées)."""
+    import glob
+    from blind import sha256_file
+    return [dict(fichier=os.path.basename(f), octets=os.path.getsize(f), sha256=sha256_file(f)) for f in sorted(glob.glob(pattern))]

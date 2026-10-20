@@ -9,7 +9,8 @@ Usage, depuis la racine du dépôt, après un fetch DR3 complet :
   python tools/exercice_dr4.py            exercice complet, comptes de simulation du protocole (≈ 4 h, à lancer le soir)
   python tools/exercice_dr4.py --fumee    comptes de simulation divisés par 100 (≈ 20 min) : plomberie seulement
 Dossier créé, jamais réutilisé ni effacé : ../wbt-gaia-EXERCICE-DR4-<date-heure>[-fumee] (v0.9.7, audit F6).
-Le dépôt doit être propre (aucune modification des fichiers suivis) : la copie est identifiée par son commit (audit F7) ;
+Le dépôt doit être exactement un commit (aucune modification des fichiers suivis, aucun fichier non suivi et non ignoré),
+et les fichiers requis par le pipeline doivent être suivis par Git : la copie est identifiée par son commit (audits F7, v0.9.7) ;
 --autoriser-modifs lève ce refus et consigne alors l'état réel (git status et empreinte de chaque fichier copié).
 Rapport et journal : dans le dossier d'exercice, et copiés dans validation_dr4_exercice/ du dépôt (seule écriture dans le
 dépôt), pour servir de preuve d'exécution (audit F1)."""
@@ -29,9 +30,18 @@ if not DR3: sys.exit("Catalogue DR3 local absent : lance d'abord « python run_w
 rng = np.random.default_rng(20261202)
 import hashlib
 DIRTY = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"], capture_output=True, text=True, cwd=ROOT).stdout.strip()
-if DIRTY and "--autoriser-modifs" not in sys.argv:
-    sys.exit("ARRÊT : le dépôt a des modifications non validées ; l'exercice doit tourner sur un commit exact.\n" + DIRTY
-             + "\nValide-les (git commit) ou relance avec --autoriser-modifs (l'état réel sera consigné).")
+UNTRACKED = subprocess.run(["git", "ls-files", "--others", "--exclude-standard"], capture_output=True, text=True, cwd=ROOT).stdout.split()
+TRACKED = set(subprocess.run(["git", "ls-files"], capture_output=True, text=True, cwd=ROOT).stdout.splitlines())
+REQUIRED = ["run_wbt.py", "wbt_pipeline.py", "calibrate.py", "blind.py", "fetch_gaia.py", "epoch_accel.py", "contamination.py",
+            "finfer.py", "acquisition.py", "jointlik.py", "eccfit.py", "config_prereg.json",
+            "validation_contamination/pgrid.npy", "validation_contamination/pgrid_dr3.npy"]
+NOT_TRACKED = [f for f in REQUIRED if f not in TRACKED]       # v0.9.8 : fichiers requis non suivis = jamais copiés (audit v0.9.7, P1)
+if NOT_TRACKED: sys.exit("ARRÊT : fichiers requis non suivis par Git (ils ne seraient pas copiés) : " + ", ".join(NOT_TRACKED)
+                         + "\nAjoute-les (git add, git commit) puis relance.")
+if (DIRTY or UNTRACKED) and "--autoriser-modifs" not in sys.argv:
+    sys.exit("ARRÊT : le dépôt n'est pas exactement un commit : modifications non validées ou fichiers non suivis.\n"
+             + "\n".join(filter(None, [DIRTY] + [f"?? {f}" for f in UNTRACKED]))
+             + "\nValide-les (git commit), ignore-les, ou relance avec --autoriser-modifs (l'état réel sera consigné).")
 T0 = time.time(); REP = dict(debut=datetime.datetime.now().isoformat(timespec="seconds"), mode="fumée" if FUMEE else "complet",
                              dossier=DST, etapes={}, controles={})
 JOURNAL = os.path.join(DST, "EXERCICE_DR4_journal.txt")
@@ -58,6 +68,8 @@ for f in glob.glob(os.path.join(DST, "*_dr3*")) + glob.glob(os.path.join(DST, "F
     if os.path.isfile(f): os.remove(f)
 REP["commit"] = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, cwd=ROOT).stdout.strip()
 REP["depot_modifie"] = DIRTY or False
+REP["fichiers_non_suivis"] = UNTRACKED
+REP["fichiers_requis_suivis"] = REQUIRED
 REP["empreintes_copiees"] = {f: hashlib.sha256(open(os.path.join(DST, f), "rb").read()).hexdigest() for f in tracked if os.path.exists(os.path.join(DST, f))}
 REP["avertissement"] = ("Faux DR4 : vitesses, positions et parallaxes DR3 réelles, filtrées par des drapeaux et une astrométrie par époque "
                         "inventés. Le S de l'exercice n'a aucune valeur physique. Une VOTable synthétique lisible ne valide pas le format réel "
@@ -85,6 +97,9 @@ for f in DR3:
     flags.append(pd.DataFrame(dict(source_id=df.source_id, non_single_star=(rng.random(n) < 0.04).astype(int),
                                    sea_env_flag=(rng.random(n) < 0.02).astype(int))))
 FLAGS = os.path.join(DST, "EXERCICE_flags_dr4.csv"); pd.concat(flags).to_csv(FLAGS, index=False); del flags
+sys.path.insert(0, ROOT); import acquisition as acq; _cwd = os.getcwd(); os.chdir(DST)     # v0.9.8 : section « catalogue » exigée en DR4
+acq.record("dr4", "catalogue", serveur="EXERCICE : faux DR4 fabriqué à partir du catalogue DR3 local (aucune requête)", complet=True,
+           schema="gaiadr4 (simulé)", tranches=acq.inventory("dr4_*.csv")); os.chdir(_cwd)
 REP["etapes"]["faux_catalogue"] = dict(minutes=round((time.time() - t)/60, 1), tranches=len(DR3))
 say(f"faux catalogue DR4 : {len(DR3)} tranches ({REP['etapes']['faux_catalogue']['minutes']} min)")
 
@@ -149,6 +164,8 @@ REP["controles"] = {
     "gel et levée": bool(R.get("freeze_manifest")) and "verdict" in R,
     "test conjoint calculé": "conjoint" in R,
     "multivers DR4 (crible et époques inclus)": os.path.exists("multiverse_dr4.csv"),
+    "provenance complète (catalogue, drapeaux, époques)": all(k in json.load(open("ACQUISITION_dr4.json", encoding="utf-8"))
+        for k in ("catalogue", "drapeaux", "epoques")) if os.path.exists("ACQUISITION_dr4.json") else False,
     "sources de données consignées et gelées": os.path.exists("ACQUISITION_dr4.json")
         and "ACQUISITION_dr4.json" in json.load(open("FREEZE_dr4.json", encoding="utf-8")).get("files", {})}
 REP["resultat_sans_valeur_physique"] = dict(N=R.get("N"), verdict=R.get("verdict"), S_obs=R.get("S_obs"))

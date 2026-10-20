@@ -27,5 +27,13 @@ try:
     acq.record("drX", "drapeaux", source="fichier", n=4); acq.record("drX", "epoques", source="DataLink")
     import json; r = json.load(open("ACQUISITION_drX.json", encoding="utf-8"))
     assert set(r) == {"drapeaux", "epoques"} and r["drapeaux"]["n"] == 4, "journal d'acquisition incomplet"
+    acq.record("drX", "drapeaux", source="TAP", n=5); r = json.load(open("ACQUISITION_drX.json", encoding="utf-8"))
+    assert r["drapeaux"]["n"] == 5 and r["drapeaux"]["historique"][0]["n"] == 4, "historique des réécritures perdu"
+    try: acq.require("drX"); raise AssertionError("section « catalogue » manquante non détectée")
+    except SystemExit: pass
+    acq.record("drX", "catalogue", source="test"); acq.require("drX")
+    os.remove("ACQUISITION_drX.json")
+    try: acq.require("drX"); raise AssertionError("journal absent non détecté")
+    except SystemExit: pass
 finally: os.chdir(cwd)
-print("tests d'acquisition : OK (6 cas)")
+print("tests d'acquisition : OK (9 cas)")

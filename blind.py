@@ -43,6 +43,9 @@ def freeze(path, files, arrays):
 
 def verify(path, files, arrays):
     man = json.load(open(path, encoding="utf-8"))
+    if set(man["files"]) != set(files) or set(man["arrays"]) != set(arrays):     # v0.9.8 : ensembles exacts (audit v0.9.7, P0)
+        raise SystemExit("LEVÉE REFUSÉE : la liste des fichiers gelés ne correspond pas -> en trop au gel "
+                         f"{sorted(set(man['files']) - set(files))}, absents du gel {sorted(set(files) - set(man['files']))}")
     bad = [f for f in files if man["files"].get(f) != sha256_file(f)]
     bad += [k for k, v in arrays.items() if man["arrays"].get(k) != sha256_array(v)]
     if bad:
@@ -61,6 +64,9 @@ def check_completion(path, files):
     if not os.path.exists(path):
         raise SystemExit("GEL REFUSÉ : « blind » n'a pas été mené à son terme (marqueur " + path + " absent). Relance « blind » jusqu'au bout.")
     rec = json.load(open(path, encoding="utf-8"))
+    if set(rec["files"]) != set(files):                                          # v0.9.8 : ensembles exacts
+        raise SystemExit("GEL REFUSÉ : la liste des fichiers à geler a changé depuis la fin de « blind » -> "
+                         f"{sorted(set(rec['files']) ^ set(files))}. Relance « blind ».")
     bad = [f for f in files if rec["files"].get(f) != (sha256_file(f) if os.path.exists(f) else None)]
     if bad:
         raise SystemExit("GEL REFUSÉ : modifié depuis la fin de « blind » -> " + str(bad) + ". Relance « blind » avec le code actuel.")
