@@ -17,15 +17,15 @@ La clé d'aveuglement est créée automatiquement dans `~/.wbt_blind_key`, hors 
 ## Procédure du 2 décembre 2026
 
 1. **Essai à sec.** `SELECT TOP 1 source_id FROM gaiadr4.gaia_source`. Seuls `tap.schema` et `tap.row_limit` peuvent être ajustés ; c'est un écart technique, à documenter.
-2. **Téléchargement**, en trois terminaux parallèles :
-   - bash : `M=3 R=0 python run_wbt.py dr4 fetch` (puis R=1, R=2) ;
-   - PowerShell : `$env:M=3; $env:R=0; python run_wbt.py dr4 fetch`.
+2. **Téléchargement**, en trois terminaux parallèles, puis une passe finale (v0.9.7) :
+   - PowerShell : `$env:M=3; $env:R=0; python fetch_gaia.py dr4` (puis R=1, R=2) ; bash : `M=3 R=0 python fetch_gaia.py dr4` ;
+   - une fois les trois terminés : `python run_wbt.py dr4 fetch`, sans M ni R. Cette passe complète ce qui manque, vérifie la complétude et consigne le serveur interrogé dans `ACQUISITION_dr4.json`. Seule son erreur est bloquante.
 
    Le découpage est dimensionné sur le `COUNT(*)` serveur. Les tranches tronquées sont recoupées automatiquement. La complétude est vérifiée sur les identifiants uniques.
 3. **Construction.** `python run_wbt.py dr4 build` : paires, cinématique, crible DR4, puis `all_source_flags` pour les seuls candidats.
 3b. **Crible par époques.** `python run_wbt.py dr4 epoch` : astrométrie par époque (DataLink) des composantes candidates, tests d'accélération et UWE (`epoch_accel.py`). Si DataLink échoue, télécharger depuis l'archive et indiquer le fichier via `WBT_EPOCH_FILE`.
-4. **Analyse aveugle.** `python run_wbt.py dr4 blind` : contrôles sur N et sur la répartition en r/rM, S permuté ≈ 0, puis 5000 simulations Newton et 5000 MOND.
-5. **Gel.** `python run_wbt.py dr4 freeze`, puis publier `FREEZE_dr4.json` par un commit horodaté **avant** la levée.
+4. **Analyse aveugle.** `python run_wbt.py dr4 blind` : contrôles sur N et sur la répartition en r/rM, S permuté ≈ 0, puis 50 000 simulations par colonne (Newton, MOND et scénarios d'excentricité), l'enveloppe de contamination et la calibration du test conjoint.
+5. **Gel.** `python run_wbt.py dr4 freeze`, puis publier `FREEZE_dr4.json` et `ACQUISITION_dr4.json` par un commit horodaté **avant** la levée, et vérifier que le push a abouti : après `git fetch`, `git rev-parse HEAD` et `git rev-parse origin/main` doivent coïncider.
 6. **Levée.** `python run_wbt.py dr4 unblind` produit `RESULT_dr4.json`, qui porte l'empreinte du gel. La levée est refusée si le code, la configuration, l'échantillon ou les simulations ont changé depuis le gel.
 7. **Analyses secondaires.** `python run_wbt.py dr4 multiverse`, autorisé seulement si `RESULT` correspond au gel en cours.
 
@@ -89,6 +89,7 @@ Essais écartés : une marche fondée sur le quartile inférieur de ṽ au lieu 
 ## Changements v0.7 (audit externe du 17/10/2026)
 
 - **v0.7-A** : équation MOND conforme à Cookson et al. 2026 (éq. 7). Le terme de champ externe est [tanh(0,825 g_N,e/g_N,i)]^3,7, et non tanh((·)^3,7). L'écart sur le boost allait jusqu'à 1,5 % vers x ≈ 1. Test de conformité : `python tests/test_mond_eq7.py`. Les scripts archivés de `exploration_dr3/` gardent l'ancienne forme, comme trace de l'exploration.
+- **v0.9.7** : corrections de l'audit externe du 20/10/2026 sur la v0.9.6 et la fiche jour J. Drapeaux de repli lus strictement (colonnes, doublons, identifiants manquants : arrêt) et drapeau inconnu compté non propre ; `ACQUISITION_<rel>.json` consigne le serveur TAP, les fichiers de repli et leurs empreintes, et il est gelé ; téléchargement parallèle par `fetch_gaia.py`, avec une seule vérification finale ; exercice DR4 dans un dossier horodaté jamais effacé, sur un dépôt propre, avec copie du rapport dans `validation_dr4_exercice/` ; tests fonctionnels `tests/test_acquisition.py`. Aucun changement de méthode : S reste le test principal.
 - **v0.9.6** : préparation du jour J. `tools/exercice_dr4.py` fait tourner toute la branche DR4 (build avec drapeaux, epoch, blind en mode complet, freeze, unblind, multiverse) sur un faux DR4 fabriqué à partir du catalogue DR3, dans un dossier isolé hors du dépôt ; l'option `--fumee` en fait un test de plomberie d'environ 20 minutes. Plans B : `WBT_TAP_URL` pour interroger un miroir officiel si l'archive ESA est saturée (complétude vérifiée contre ce même serveur), `WBT_FLAGS_FILE` pour les drapeaux de all_source_flags et `WBT_EPOCH_FILE` pour l'astrométrie par époque, tous deux téléchargés à part.
 - **v0.9.5** : études de caractérisation du test conjoint refaites sur les entrées de la répétition DR3 complète (α = 2,00 ; 0,50) : (c) 0,97, (d) 1,56, gain +0,51, biais 0,52σ ; décision inchangée, sorties du mode rapide archivées. Multivers DR3 (108 spécifications) : S médian +0,073, spécification principale au 58e centile ; le dégroupage domine (sans lui, S ≈ +0,15).
 - **v0.9.4** : garde de complétude. « blind » écrit `BLIND_<rel>_complete.json` (empreintes des fichiers à geler) seulement s'il va au bout, et « freeze » refuse de geler si ce marqueur manque ou si un fichier a changé depuis. Constat à l'origine : le 19/10/2026, un « freeze » lancé après un « blind » interrompu a gelé des artefacts incohérents (commit 3e30878, répétition DR3 sans effet sur le protocole DR4).

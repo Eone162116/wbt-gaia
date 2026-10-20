@@ -8,8 +8,11 @@ AUCUNE valeur physique. Seule compte la question « la chaîne DR4 va-t-elle au 
 Usage, depuis la racine du dépôt, après un fetch DR3 complet :
   python tools/exercice_dr4.py            exercice complet, comptes de simulation du protocole (≈ 4 h, à lancer le soir)
   python tools/exercice_dr4.py --fumee    comptes de simulation divisés par 100 (≈ 20 min) : plomberie seulement
-Dossier créé (écrasé à chaque lancement) : ../wbt-gaia-EXERCICE-DR4  (ou ../wbt-gaia-EXERCICE-DR4-fumee)
-Rapport : <dossier>/EXERCICE_DR4_rapport.json et <dossier>/EXERCICE_DR4_journal.txt"""
+Dossier créé, jamais réutilisé ni effacé : ../wbt-gaia-EXERCICE-DR4-<date-heure>[-fumee] (v0.9.7, audit F6).
+Le dépôt doit être propre (aucune modification des fichiers suivis) : la copie est identifiée par son commit (audit F7) ;
+--autoriser-modifs lève ce refus et consigne alors l'état réel (git status et empreinte de chaque fichier copié).
+Rapport et journal : dans le dossier d'exercice, et copiés dans validation_dr4_exercice/ du dépôt (seule écriture dans le
+dépôt), pour servir de preuve d'exécution (audit F1)."""
 import os, sys, json, glob, shutil, subprocess, time, datetime
 import numpy as np, pandas as pd
 
@@ -17,11 +20,18 @@ ROOT = os.path.abspath(os.getcwd())
 if not os.path.exists(os.path.join(ROOT, "config_prereg.json")) or not os.path.exists(os.path.join(ROOT, "run_wbt.py")):
     sys.exit("Lance ce script depuis la racine du dépôt wbt-gaia.")
 FUMEE = "--fumee" in sys.argv
-DST = os.path.abspath(os.path.join(ROOT, os.pardir, "wbt-gaia-EXERCICE-DR4" + ("-fumee" if FUMEE else "")))
+STAMP = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+DST = os.path.abspath(os.path.join(ROOT, os.pardir, f"wbt-gaia-EXERCICE-DR4-{STAMP}" + ("-fumee" if FUMEE else "")))
+if os.path.exists(DST): sys.exit(f"ARRÊT : {DST} existe déjà ; rien n'est effacé, relance dans une seconde.")
 if os.path.commonpath([DST, ROOT]) == ROOT: sys.exit("ARRÊT : le dossier d'exercice ne doit pas être dans le dépôt.")
 DR3 = sorted(glob.glob(os.path.join(ROOT, "dr3_*.csv")))
 if not DR3: sys.exit("Catalogue DR3 local absent : lance d'abord « python run_wbt.py dr3 fetch ».")
 rng = np.random.default_rng(20261202)
+import hashlib
+DIRTY = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"], capture_output=True, text=True, cwd=ROOT).stdout.strip()
+if DIRTY and "--autoriser-modifs" not in sys.argv:
+    sys.exit("ARRÊT : le dépôt a des modifications non validées ; l'exercice doit tourner sur un commit exact.\n" + DIRTY
+             + "\nValide-les (git commit) ou relance avec --autoriser-modifs (l'état réel sera consigné).")
 T0 = time.time(); REP = dict(debut=datetime.datetime.now().isoformat(timespec="seconds"), mode="fumée" if FUMEE else "complet",
                              dossier=DST, etapes={}, controles={})
 JOURNAL = os.path.join(DST, "EXERCICE_DR4_journal.txt")
@@ -32,11 +42,14 @@ def finish(ok, why=""):
     REP.update(fin=datetime.datetime.now().isoformat(timespec="seconds"), duree_totale_min=round((time.time() - T0)/60, 1),
                succes=ok, motif=why)
     json.dump(REP, open(os.path.join(DST, "EXERCICE_DR4_rapport.json"), "w", encoding="utf-8"), indent=1, ensure_ascii=False)
+    proof = os.path.join(ROOT, "validation_dr4_exercice"); os.makedirs(proof, exist_ok=True)     # v0.9.7 : preuve d'exécution (audit F1)
+    tag = f"{STAMP}_{REP['mode'].replace('é', 'e')}"
+    shutil.copy2(os.path.join(DST, "EXERCICE_DR4_rapport.json"), os.path.join(proof, f"rapport_{tag}.json"))
+    if os.path.exists(JOURNAL): shutil.copy2(JOURNAL, os.path.join(proof, f"journal_{tag}.txt"))
     say(("EXERCICE RÉUSSI" if ok else "EXERCICE ÉCHOUÉ : " + why) + f" — {REP['duree_totale_min']} min ; rapport : EXERCICE_DR4_rapport.json")
     sys.exit(0 if ok else 1)
 
 # 1. Dossier isolé : copie du code et des fichiers suivis par Git (sans les données)
-if os.path.exists(DST): shutil.rmtree(DST)
 os.makedirs(DST)
 tracked = subprocess.run(["git", "ls-files"], capture_output=True, text=True, cwd=ROOT).stdout.splitlines()
 for f in tracked:
@@ -44,6 +57,11 @@ for f in tracked:
 for f in glob.glob(os.path.join(DST, "*_dr3*")) + glob.glob(os.path.join(DST, "FREEZE_*")) + glob.glob(os.path.join(DST, "RESULT_*")):
     if os.path.isfile(f): os.remove(f)
 REP["commit"] = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, cwd=ROOT).stdout.strip()
+REP["depot_modifie"] = DIRTY or False
+REP["empreintes_copiees"] = {f: hashlib.sha256(open(os.path.join(DST, f), "rb").read()).hexdigest() for f in tracked if os.path.exists(os.path.join(DST, f))}
+REP["avertissement"] = ("Faux DR4 : vitesses, positions et parallaxes DR3 réelles, filtrées par des drapeaux et une astrométrie par époque "
+                        "inventés. Le S de l'exercice n'a aucune valeur physique. Une VOTable synthétique lisible ne valide pas le format réel "
+                        "de DataLink DR4, à contrôler le jour J (audit F10).")
 say(f"EXERCICE DR4 À BLANC ({REP['mode']}) — dossier {DST} — commit {REP['commit'][:7]} — résultats sans valeur physique")
 if FUMEE:
     c = json.load(open(os.path.join(DST, "config_prereg.json"), encoding="utf-8")); C = c["calibration"]
@@ -130,7 +148,9 @@ REP["controles"] = {
     "marqueur de complétude écrit": os.path.exists("BLIND_dr4_complete.json"),
     "gel et levée": bool(R.get("freeze_manifest")) and "verdict" in R,
     "test conjoint calculé": "conjoint" in R,
-    "multivers DR4 (crible et époques inclus)": os.path.exists("multiverse_dr4.csv")}
+    "multivers DR4 (crible et époques inclus)": os.path.exists("multiverse_dr4.csv"),
+    "sources de données consignées et gelées": os.path.exists("ACQUISITION_dr4.json")
+        and "ACQUISITION_dr4.json" in json.load(open("FREEZE_dr4.json", encoding="utf-8")).get("files", {})}
 REP["resultat_sans_valeur_physique"] = dict(N=R.get("N"), verdict=R.get("verdict"), S_obs=R.get("S_obs"))
 for k, v in REP["controles"].items(): say(f"  {'OK ' if v else 'NON'} {k}")
 finish(all(REP["controles"].values()), "" if all(REP["controles"].values()) else "contrôle(s) de bout de chaîne non satisfait(s)")

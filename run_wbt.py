@@ -8,20 +8,21 @@
   python run_wbt.py <dr3|dr4> all         enchaîne fetch, build, blind (s'arrête avant le gel)"""
 import glob, itertools, json, os, sys, time, numpy as np, pandas as pd
 from wbt_pipeline import (load_catalog, find_links, build_pairs, kinematics, hr_band, select, binned_test, BASE)
-import calibrate as cal, blind as bl
+import calibrate as cal, blind as bl, acquisition as acq
 
 CFG = json.load(open("config_prereg.json", encoding="utf-8"))
 REL = sys.argv[1]; STAGE = sys.argv[2]
 P = CFG["primary"]; ST = CFG["statistic"]
 CODE = ["wbt_pipeline.py", "calibrate.py", "blind.py", "run_wbt.py", "fetch_gaia.py", "epoch_accel.py", "contamination.py",
-        "finfer.py", "validation_contamination/pgrid.npy", "validation_contamination/pgrid_dr3.npy", "config_prereg.json"]
+        "finfer.py", "acquisition.py", "validation_contamination/pgrid.npy", "validation_contamination/pgrid_dr3.npy", "config_prereg.json"]
 def frozen_files():
     mes = CFG["calibration"]["contamination"].get("f_in_mode") == "mesure"
     return (CODE + [f"mocks_{REL}.csv", f"envelope_{REL}.csv"] + ([f"finfer_{REL}.csv"] if mes else [])
             + [f"K_{REL}.pkl", f"sample_{REL}.csv", f"CONTROLS_{REL}_aveugle.json"]      # v0.7-D : données analysées et contrôles
             + ([f"eccfit_{REL}.csv", "eccfit.py"] if CFG["calibration"].get("ecc_mode") == "mesure" else [])   # v0.8
             + ([f"joint_{REL}.npz", f"joint_mocks_{REL}.csv", "jointlik.py"] if CFG["calibration"].get("joint") else [])   # v0.9
-            + ([f"epoch_stats_{REL}.csv"] if REL == "dr4" else []))
+            + ([f"epoch_stats_{REL}.csv"] if REL == "dr4" else [])
+            + ([f"ACQUISITION_{REL}.json"] if os.path.exists(f"ACQUISITION_{REL}.json") else []))   # v0.9.7 : sources de données
 pattern = f"{REL}_*.csv" if glob.glob(f"{REL}_*.csv") else "s40_*.csv"      # s40_* = tranches DR3 de développement
 
 def log(*a):
@@ -37,7 +38,9 @@ def primary_selection(K):
 
 if STAGE in ("fetch", "all"):
     import fetch_gaia as fg
-    fg.fetch_catalog(REL); ok = fg.check_complete(REL); log("catalogue complet :", ok)
+    fg.fetch_catalog(REL); ok = fg.check_complete(REL); log("catalogue complet :", ok, "; serveur TAP :", fg.TAP_URL)
+    acq.record(REL, "catalogue", serveur=fg.TAP_URL, schema=CFG["tap"]["schema"][REL], complet=bool(ok),
+               n_tranches=len(glob.glob(f"{REL}_*.csv")), n_serveur=fg.server_count(REL))   # v0.9.7
     if not ok: raise SystemExit(f"Catalogue incomplet : lance « python fetch_gaia.py repair {REL} » puis relance fetch.")   # v0.9.1
 
 if STAGE in ("build", "all"):
@@ -48,14 +51,20 @@ if STAGE in ("build", "all"):
         import fetch_gaia as fg
         cand = (K.rsky < 30000) & (K.d < max(CFG["multiverse"]["dmax"])) & K.both_rv
         ids = np.concatenate([K.sid1[cand], K.sid2[cand]])
-        if os.environ.get("WBT_FLAGS_FILE"):     # v0.9.6 : plan B (fichier téléchargé à part) et exercice DR4
-            F = pd.read_csv(os.environ["WBT_FLAGS_FILE"]); F = F[F.source_id.isin(ids)].set_index("source_id")
-            log(f"flags lus dans {os.environ['WBT_FLAGS_FILE']} (au lieu de la requête TAP)")
+        nd = len(np.unique(ids))
+        if os.environ.get("WBT_FLAGS_FILE"):     # v0.9.6-7 : plan B (fichier téléchargé à part), lu strictement
+            pth = os.environ["WBT_FLAGS_FILE"]; F = acq.read_flags_file(pth, ids)
+            src = dict(source="fichier", chemin=os.path.abspath(pth), sha256=bl.sha256_file(pth))
+            log(f"flags lus dans {pth} (au lieu de la requête TAP) ; sha256 {src['sha256'][:16]}")
         else:
             F = fg.fetch_extra(REL, ids, CFG["flags_table"]["table"], CFG["flags_table"]["columns"]).set_index("source_id")
-        ok = (F.non_single_star.fillna(0) == 0) & (F.sea_env_flag.fillna(0) == 0)
+            src = dict(source="TAP", serveur=fg.TAP_URL, table=CFG["flags_table"]["table"])
+        ok = acq.flags_ok(F)                      # v0.9.7 : drapeau inconnu (vide, NaN) = non propre
+        n_inc = int(F[list(acq.FLAG_COLS)].isna().any(axis=1).sum()); n_abs = nd - int(F.index.isin(np.unique(ids)).sum())
         K["flags_ok"] = ok.reindex(K.sid1).fillna(False).values & ok.reindex(K.sid2).fillna(False).values
-        log(f"flags récupérés pour {len(F)} sources ; paires candidates propres : {K.flags_ok[cand].mean():.3f}")
+        log(f"flags récupérés pour {len(F)} sources sur {nd} demandées ({n_abs} absentes, {n_inc} incomplètes : non propres) ; "
+            f"paires candidates propres : {K.flags_ok[cand].mean():.3f}")
+        acq.record(REL, "drapeaux", n_demandees=nd, n_recues=len(F), n_absentes=n_abs, n_incompletes=n_inc, **src)
     K.to_pickle(f"K_{REL}.pkl")
 
 if STAGE == "epoch" or (STAGE == "all" and REL == "dr4"):
@@ -71,6 +80,9 @@ if STAGE == "epoch" or (STAGE == "all" and REL == "dr4"):
     log(f"crible par époques : téléchargement pour {len(ids)} composantes (≈ {len(ids)*0.15/1000:.1f} Go en RAW)")
     raw = ea.load_epoch_file(os.environ["WBT_EPOCH_FILE"]) if os.environ.get("WBT_EPOCH_FILE") else ea.fetch_epoch_dr4(ids)
     St = ea.test_all(ea.transits_from_table(raw)); St.to_csv(f"epoch_stats_{REL}.csv", index=False)
+    ef = os.environ.get("WBT_EPOCH_FILE")      # v0.9.7 : provenance consignée
+    acq.record(REL, "epoques", **(dict(source="fichier", chemin=os.path.abspath(ef), sha256=bl.sha256_file(ef)) if ef else
+                                 dict(source="DataLink", release="Gaia DR4")), n_composantes_demandees=len(ids), n_avec_donnees=int(St.source_id.nunique()))
     bad = set(St.source_id[ea.flag(St, E["p_acc"], E["uwe_max"]) | (St.n_transits < E["min_transits"])])
     have = set(St.source_id)
     def _state(a, b):                       # v0.7-C : trois états distincts

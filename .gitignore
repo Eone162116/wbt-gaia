@@ -12,3 +12,4 @@ __pycache__/
 !validation_joint/*.csv
 joint_*.npz
 !validation_joint/**/*.csv
+!multiverse_dr4.csv
