@@ -48,7 +48,11 @@ if STAGE in ("build", "all"):
         import fetch_gaia as fg
         cand = (K.rsky < 30000) & (K.d < max(CFG["multiverse"]["dmax"])) & K.both_rv
         ids = np.concatenate([K.sid1[cand], K.sid2[cand]])
-        F = fg.fetch_extra(REL, ids, CFG["flags_table"]["table"], CFG["flags_table"]["columns"]).set_index("source_id")
+        if os.environ.get("WBT_FLAGS_FILE"):     # v0.9.6 : plan B (fichier téléchargé à part) et exercice DR4
+            F = pd.read_csv(os.environ["WBT_FLAGS_FILE"]); F = F[F.source_id.isin(ids)].set_index("source_id")
+            log(f"flags lus dans {os.environ['WBT_FLAGS_FILE']} (au lieu de la requête TAP)")
+        else:
+            F = fg.fetch_extra(REL, ids, CFG["flags_table"]["table"], CFG["flags_table"]["columns"]).set_index("source_id")
         ok = (F.non_single_star.fillna(0) == 0) & (F.sea_env_flag.fillna(0) == 0)
         K["flags_ok"] = ok.reindex(K.sid1).fillna(False).values & ok.reindex(K.sid2).fillna(False).values
         log(f"flags récupérés pour {len(F)} sources ; paires candidates propres : {K.flags_ok[cand].mean():.3f}")

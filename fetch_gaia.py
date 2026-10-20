@@ -8,9 +8,10 @@ Usage : python fetch_gaia.py [dr3|dr4]"""
 import json, os, sys, time, requests, numpy as np, pandas as pd
 
 CFG = json.load(open(os.path.join(os.path.dirname(__file__) or ".", "config_prereg.json"), encoding="utf-8"))
+TAP_URL = os.environ.get("WBT_TAP_URL", CFG["tap"]["url"])   # v0.9.6 : plan B, miroir officiel si l'archive ESA est saturée
 
 def _sync(query, timeout=600):
-    r = requests.post(CFG["tap"]["url"], data=dict(REQUEST="doQuery", LANG="ADQL", FORMAT="csv", QUERY=query), timeout=timeout)
+    r = requests.post(TAP_URL, data=dict(REQUEST="doQuery", LANG="ADQL", FORMAT="csv", QUERY=query), timeout=timeout)
     if r.status_code != 200 or not r.content.startswith(b"source_id"):
         raise RuntimeError(f"TAP {r.status_code}: {r.content[:300]!r}")
     return r.content
@@ -24,7 +25,7 @@ def server_count(release):
     sch = CFG["tap"]["schema"][release]; t = CFG["tap"]
     q = (f"SELECT COUNT(*) AS n FROM {sch}.gaia_source WHERE parallax > {t['plx_min_catalog']} "
          f"AND parallax_over_error > {t['snr_catalog']}")
-    r = requests.post(t["url"], data=dict(REQUEST="doQuery", LANG="ADQL", FORMAT="csv", QUERY=q), timeout=300)
+    r = requests.post(TAP_URL, data=dict(REQUEST="doQuery", LANG="ADQL", FORMAT="csv", QUERY=q), timeout=300)
     return int(r.text.strip().splitlines()[-1])
 
 def slice_count(release, lo, hi):
@@ -32,7 +33,7 @@ def slice_count(release, lo, hi):
     sch = CFG["tap"]["schema"][release]
     q = (f"SELECT COUNT(*) AS n FROM {sch}.gaia_source WHERE parallax >= {lo:.6f} AND parallax < {hi:.6f} "
          f"AND parallax_over_error > {CFG['tap']['snr_catalog']}")
-    r = requests.post(CFG["tap"]["url"], data=dict(REQUEST="doQuery", LANG="ADQL", FORMAT="csv", QUERY=q), timeout=300)
+    r = requests.post(TAP_URL, data=dict(REQUEST="doQuery", LANG="ADQL", FORMAT="csv", QUERY=q), timeout=300)
     return int(r.text.strip().splitlines()[-1])
 
 def fetch_range(release, lo, hi, outdir, depth=0):
@@ -54,6 +55,7 @@ def fetch_range(release, lo, hi, outdir, depth=0):
 
 def fetch_catalog(release, outdir=".", n_slices=None):
     t = CFG["tap"]; dmax = 1000 / t["plx_min_catalog"]
+    if TAP_URL != CFG["tap"]["url"]: print(f"serveur TAP de repli : {TAP_URL} (complétude vérifiée contre ce même serveur)", flush=True)
     n_slices = n_slices or int(np.ceil(1.3 * server_count(release) / t["row_limit"]))   # identique pour tous les terminaux
     edges = [dmax*(k/n_slices)**(1/3) for k in range(n_slices+1)]
     plx = [1e6] + [1000/d for d in edges[1:]]
