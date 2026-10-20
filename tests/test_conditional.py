@@ -20,4 +20,16 @@ kgg = lambda n, rr, g: cal.kepler_geometry(n, rr, "thermal", g.get("rsky"), g["x
 xx0, _ = ct.contaminated_newton(G, 0.30, np.random.default_rng(3), dict(CC, shape="raghavan2010"), 2.5, 10.0, lambda n, rr: cal.kepler_geometry(n, rr))
 xx1, vv1 = ct.contaminated_newton_cond(G, 0.30, np.random.default_rng(3), dict(CC, shape="raghavan2010"), 2.5, 10.0, kgg)
 assert len(xx0) < 0.95*N and len(xx1) >= 0.999*N and (vv1 < 2.5).all(), f"enveloppe : {len(xx0)} puis {len(xx1)} paires sur {N}"
-print(f"tests du tirage conditionné : OK (test conjoint {k0.mean():.2f} → {k1.mean():.3f} ; enveloppe {len(xx0)/N:.2f} → {len(xx1)/N:.3f})")
+st = {}
+jl.simulate_obs_cond(G, *args, np.random.default_rng(4), 2.5, 10.0, stats=st)
+assert st["paires"] == N and st["manquantes"] <= 1, f"comptage de complétude incorrect : {st}"
+assert jl.check_completeness(st, 0.001, "test") <= 0.001
+st0 = {}; _, _, k_imp = jl.simulate_obs_cond(G, *args, np.random.default_rng(5), 2.5, 0.0, max_iter=5, stats=st0)   # coupe impossible
+assert not k_imp.any() and st0["manquantes"] == N, "une coupe impossible doit laisser toutes les paires manquantes"
+try: jl.check_completeness(st0, 0.001, "test"); raise AssertionError("calibration incomplète non refusée (test conjoint)")
+except SystemExit: pass
+try:
+    cal.calibrate_envelope(G, n_per_f=1, cfg=dict(CC, shape="raghavan2010"), vtmax=2.5, dvsky=0.0, scenarios=[("raghavan2010", 0.3)], max_iter=5)
+    raise AssertionError("calibration incomplète non refusée (enveloppe)")
+except SystemExit: pass
+print(f"tests du tirage conditionné : OK, 6 cas (test conjoint {k0.mean():.2f} → {k1.mean():.3f} ; enveloppe {len(xx0)/N:.2f} → {len(xx1)/N:.3f} ; règle de complétude appliquée)")

@@ -82,10 +82,13 @@ def sub(G, idx, rep=1):
     k = np.tile(idx, rep); return {key: (val[k] if np.ndim(val) == 1 else val[k]) for key, val in G.items()}
 
 
-def simulate_obs_cond(G, *args, max_iter=30, **kw):
+def simulate_obs_cond(G, *args, max_iter=200, stats=None, **kw):
     """v0.9.9 — Jeu simulé CONDITIONNÉ à la sélection : chaque paire de la géométrie observée est retirée jusqu'à passer les
     mêmes coupes que les données (crible de contamination, ṽ < vtmax, Δv sur le ciel). Raison : la géométrie observée a déjà
     passé ces coupes ; en retirant les paires simulées détectées, les jeux simulés gardaient 65 à 76 % des paires (DR3).
+    Coupes simulées, et elles seules : crible de contamination simulé, ṽ < vtmax, Δv sur le ciel < dvsky. Les autres étapes de
+    sélection (filtre HR, RUWE, dégroupage, présence et écart des vitesses radiales) agissent par la géométrie observée, fixe.
+    v0.9.10 : jusqu'à 200 essais ; stats (dict) cumule « paires » et « manquantes » pour le contrôle de complétude.
     Échantillonnage par rejet, paire par paire (les paires sont indépendantes à géométrie donnée) : la loi de chaque paire est
     exactement sa loi conditionnelle. Après max_iter essais, les rares paires restantes sont marquées non retenues.
     Mêmes arguments que simulate_obs ; renvoie (log ṽ, ψ, retenue)."""
@@ -94,7 +97,18 @@ def simulate_obs_cond(G, *args, max_iter=30, **kw):
         a, b, k = simulate_obs(sub(G, todo), *args, **kw)
         ok = todo[k]; lv[ok], ps[ok], kept[ok] = a[k], b[k], True; todo = todo[~k]
         if not len(todo): break
+    if stats is not None:
+        stats["paires"] = stats.get("paires", 0) + n; stats["manquantes"] = stats.get("manquantes", 0) + len(todo)
     return lv, ps, kept
+
+def check_completeness(stats, max_frac, label):
+    """v0.9.10 : règle fixée avant les données. Si plus de max_frac des tirages de paires restent non reconstitués après
+    max_iter essais, la calibration est refusée (le modèle simulé n'arrive pas à reproduire l'échantillon observé)."""
+    frac = stats.get("manquantes", 0)/max(stats.get("paires", 1), 1)
+    if frac > max_frac:
+        raise SystemExit(f"CALIBRATION REFUSÉE ({label}) : {stats.get('manquantes', 0)} tirages de paires non reconstitués sur "
+                         f"{stats.get('paires', 0)} ({frac:.3%} > {max_frac:.3%}).")
+    return frac
 
 def _density(lv, ps):
     """Densité lissée non tronquée sur la grille fine (par dex et par degré) et sa fonction de répartition en log ṽ."""

@@ -187,8 +187,10 @@ if STAGE in ("blind", "all"):
         log(f"f_in mesuré (drapeau {grid}, sans vitesses) : taux signalé {r:.3f} ± {sr:.3f} sur {len(flags)} paires candidates ; "
             + " ; ".join(f"{sh} {fs[0]:.2f}–{fs[2]:.2f}" for sh, fs in band.items()))
     env = cal.calibrate_envelope(geo, n_per_f=(CC["n_mocks_per_f"]//10 if quick else CC["n_mocks_per_f"]), seed=C["seed"], stat_kw=dict(x_low=ST["x_low"], x_high=ST["x_high"]),
-                                 cfg=CC, vtmax=P["vtmax"], dvsky=P["dvsky"], scenarios=scenarios, ecc=ecc_env)
+                                 cfg=CC, vtmax=P["vtmax"], dvsky=P["dvsky"], scenarios=scenarios, ecc=ecc_env,
+                                 max_iter=C["conditionnel"]["max_essais"], missing_max=C["conditionnel"]["manquantes_max"])
     env.to_csv(f"envelope_{REL}.csv", index=False)
+    st_ = env.attrs["conditionnel"]; log(f"tirage conditionnel (enveloppe) : {st_['manquantes']} tirages de paires non reconstitués sur {st_['paires']} ({st_['fraction']:.4%})")
     g = env.groupby(["shape", "f_in"]).S
     log(f"enveloppe de contamination ({CC['screen']}, {time.time()-t2:.0f} s) : S newtonien moyen : "
         + ", ".join(f"{sh[:8]} {f:.2f} → {v:+.3f}" for (sh, f), v in g.mean().items())
@@ -230,11 +232,14 @@ if STAGE in ("blind", "all"):
         nJ = JC["n_par_scenario"]//(10 if quick else 1)
         scen_j = [("newton", "central", a_c, b_c, fb[sh0][1]), ("newton", "pire_newton_f_haut", a_pn, b_pn, fb[sh0][2]),
                   ("mond", "central", a_c, b_c, fb[sh0][1]), ("mond", "pire_mond_f0", a_pm, b_pm, 0.0), ("mond", "pire_mond_f_haut", a_pm, b_pm, fb[sh0][2])]
-        rows_j = []
+        rows_j = []; stj = {"paires": 0, "manquantes": 0}
         for hyp, lab, a_, b_, f_ in scen_j:
             for _ in range(nJ):
-                lv_, ps_, k_ = jl.simulate_obs_cond(geo, a_, b_, int(hyp == "mond"), f_, sh0, CC, rng_j, P["vtmax"], P["dvsky"], grid=grid_j)   # v0.9.9
+                lv_, ps_, k_ = jl.simulate_obs_cond(geo, a_, b_, int(hyp == "mond"), f_, sh0, CC, rng_j, P["vtmax"], P["dvsky"], grid=grid_j,
+                                                    max_iter=C["conditionnel"]["max_essais"], stats=stj)   # v0.9.9-10
                 rows_j.append((hyp, lab, jl.lam(lv_, ps_, k_, zs, Tj)))
+        fr_ = jl.check_completeness(stj, C["conditionnel"]["manquantes_max"], "test conjoint")
+        log(f"tirage conditionnel (test conjoint) : {stj['manquantes']} tirages de paires non reconstitués sur {stj['paires']} ({fr_:.4%})")
         Jm = pd.DataFrame(rows_j, columns=["hyp", "scenario", "lam"]); Jm.to_csv(f"joint_mocks_{REL}.csv", index=False)
         np.savez_compressed(f"joint_{REL}.npz", D=Tj["D"].astype(np.float32), cdf=Tj["cdf"], c=Tj["c"], cont=np.array([f"{s_}:{v_}" for s_, v_ in cont]))
         gj = Jm.groupby(["hyp", "scenario"]).lam

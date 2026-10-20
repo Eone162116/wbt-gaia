@@ -54,9 +54,10 @@ def photocentre_pm(alpha, Pyr, rng):
     tc = _TAU - _TAU.mean()
     return np.stack([(ra*tc).sum(1), (de*tc).sum(1)], 1)/(tc**2).sum()
 
-def contaminated_newton_cond(geo, f_in, rng, cfg, vtmax, dvsky, kepler_geometry_geo, max_iter=30):
+def contaminated_newton_cond(geo, f_in, rng, cfg, vtmax, dvsky, kepler_geometry_geo, max_iter=200, stats=None):
     """v0.9.9 — Réalisation newtonienne contaminée CONDITIONNÉE à la sélection : chaque paire est retirée jusqu'à passer le
-    crible et les coupes, comme la paire observée correspondante. kepler_geometry_geo(n, rng, geo_sous_ensemble).
+    crible de contamination simulé et les coupes ṽ < vtmax et Δv < dvsky (et elles seules), comme la paire observée correspondante.
+    kepler_geometry_geo(n, rng, geo_sous_ensemble). v0.9.10 : jusqu'à 200 essais, comptage dans stats.
     Renvoie (x, ṽ) des paires retenues (toutes, sauf de rares paires encore rejetées après max_iter essais)."""
     n = len(geo["x"]); vt = np.full(n, np.nan); kept = np.zeros(n, bool); todo = np.arange(n)
     for _ in range(max_iter):
@@ -64,6 +65,8 @@ def contaminated_newton_cond(geo, f_in, rng, cfg, vtmax, dvsky, kepler_geometry_
         v_, k_ = _contaminated_core(g, f_in, rng, cfg, vtmax, dvsky, lambda m, r: kepler_geometry_geo(m, r, g))
         ok = todo[k_]; vt[ok], kept[ok] = v_[k_], True; todo = todo[~k_]
         if not len(todo): break
+    if stats is not None:                                    # v0.9.10 : contrôle de complétude
+        stats["paires"] = stats.get("paires", 0) + n; stats["manquantes"] = stats.get("manquantes", 0) + len(todo)
     return geo["x"][kept], vt[kept]
 
 def contaminated_newton(geo, f_in, rng, cfg, vtmax, dvsky, kepler_geometry):

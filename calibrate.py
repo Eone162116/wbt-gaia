@@ -115,19 +115,25 @@ def calibrate(x, vc, sv, n_mocks=50000, seed=0, stat_kw=None, rsky=None, ecc="th
             out[truth + suffix] = np.concatenate(vals)
     return pd.DataFrame(out)
 
-def calibrate_envelope(geo, n_per_f=20000, seed=0, stat_kw=None, cfg=None, vtmax=BASE["vtmax"], dvsky=BASE["dvsky"], scenarios=None, ecc="thermal"):
+def calibrate_envelope(geo, n_per_f=20000, seed=0, stat_kw=None, cfg=None, vtmax=BASE["vtmax"], dvsky=BASE["dvsky"], scenarios=None, ecc="thermal",
+                       max_iter=200, missing_max=0.001):
     """Hypothèse nulle newtonienne contaminée (excentricité thermique, le cas le plus défavorable à Newton).
     scenarios : liste (forme, f_in) ; par défaut cfg['f_in'] (mode fixe, v0.5)."""
     import contamination as ct
-    rng = np.random.default_rng(seed + 1); stat_kw = stat_kw or {}; rows = []
+    rng = np.random.default_rng(seed + 1); stat_kw = stat_kw or {}; rows = []; stats = {"paires": 0, "manquantes": 0}
     scenarios = scenarios or [(cfg.get("shape", "raghavan2010"), f) for f in cfg["f_in"]]
     kgg = lambda n, r, g: kepler_geometry(n, r, ecc, g.get("rsky"), g["x"])   # v0.8 ; v0.9.9 : sur le sous-ensemble tiré
     for shape, f in scenarios:
         c = dict(cfg, shape=shape)
         for _ in range(n_per_f):
-            xx, vv = ct.contaminated_newton_cond(geo, f, rng, c, vtmax, dvsky, kgg)   # v0.9.9 : N simulé = N observé
+            xx, vv = ct.contaminated_newton_cond(geo, f, rng, c, vtmax, dvsky, kgg, max_iter, stats)   # v0.9.9 : N simulé = N observé
             rows.append((shape, f, step_stat(xx, vv, **stat_kw)))
-    return pd.DataFrame(rows, columns=["shape", "f_in", "S"])
+    frac = stats["manquantes"]/max(stats["paires"], 1)
+    if frac > missing_max:                                   # v0.9.10 : règle fixée avant les données
+        raise SystemExit(f"CALIBRATION REFUSÉE (enveloppe) : {stats['manquantes']} tirages de paires non reconstitués sur {stats['paires']} "
+                         f"({frac:.3%} > {missing_max:.3%}).")
+    out = pd.DataFrame(rows, columns=["shape", "f_in", "S"]); out.attrs["conditionnel"] = dict(stats, fraction=frac)
+    return out
 
 def _tail(s, S_obs, side):
     """Probabilité de queue : estimation ponctuelle k/N, borne haute Clopper-Pearson à 95 %, approximation gaussienne."""
