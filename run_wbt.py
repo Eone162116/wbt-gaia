@@ -318,12 +318,18 @@ if STAGE == "multiverse":
         raise SystemExit("multivers interdit : RESULT ne correspond pas au gel en cours (fichier étranger ou périmé)")
     K = pd.read_pickle(f"K_{REL}.pkl"); b, slope, _ = hr_band(K)
     if P["hr_intercept"] is not None: b = P["hr_intercept"]
-    G = CFG["multiverse"]; rows = []
+    G = dict(CFG["multiverse"]); rows = []
+    hc = CFG.get("hr_cookson", {}).get("valeur")              # v0.9.12 : ordonnée de Cookson, seulement si reçue avant la date limite
+    if hc is not None: G["hr_ordonnee"] = list(G["hr_ordonnee"]) + ["cookson"]
+    def _ordonnee(o):                                          # « mediane », « mediane-0.2 », « mediane+0.2 » ou « cookson »
+        return hc if o == "cookson" else b + (float(o[len("mediane"):]) if o != "mediane" else 0.0)
     for combo in itertools.product(*G.values()):
-        spec = dict(zip(G.keys(), combo)); hrh = spec.pop("hr")
+        spec = dict(zip(G.keys(), combo)); hrh = spec.pop("hr"); ho = spec.pop("hr_ordonnee", "mediane")
         if REL == "dr3" and (spec["screen"] == "dr4" or spec.get("epoch")): continue
-        m, vt = select(K, (b, slope, hrh or 0.8), hr=hrh is not None, ipd=P["ipd"], **spec)
+        if hrh is None and ho != "mediane": continue           # sans filtre HR, l'ordonnée ne joue pas
+        m, vt = select(K, (_ordonnee(ho), slope, hrh or 0.8), hr=hrh is not None, ipd=P["ipd"], **spec)
         x, v = K.x.values[m], vt[m]
-        rows.append(dict(**spec, hr=hrh, n=int(m.sum()), S=cal.step_stat(x, v, ST["x_low"], ST["x_high"])))
+        rows.append(dict(**spec, hr=hrh, hr_ordonnee=ho, hr_b=round(_ordonnee(ho), 4), n=int(m.sum()),
+                         S=cal.step_stat(x, v, ST["x_low"], ST["x_high"])))
     R = pd.DataFrame(rows); R.to_csv(f"multiverse_{REL}.csv", index=False)
     log(f"multivers : {len(R)} spécifications ; S médian {R.S.median():+.3f} ; part S > +0,075 : {(R.S > 0.075).mean():.2f}")

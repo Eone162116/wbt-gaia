@@ -63,7 +63,8 @@
     "degroup": "snr10",
     "screen": "dr4",
     "rv_gof_max": 4.0,
-    "epoch": true
+    "epoch": true,
+    "_hr_intercept_regle": "Spécification principale (décision du 21/10/2026) : hr_intercept = null, c'est-à-dire l'ordonnée calculée sur les données de la publication analysée, médiane de M_G − 3,3 (BP−RP) sur les composantes des paires candidates (0,5 < BP−RP < 3,5 ; 4 < M_G < 14), photométrie seule, aucune vitesse. Structure du filtre reprise de Cookson et al. 2026 (pente 3,3, hauteur 0,8 mag), dont l'ordonnée n'est pas publiée. Sensibilité constatée sur DR3 le 21/10/2026, après la levée : décaler la bande de −0,1 mag (vers les étoiles plus brillantes, où se trouvent les binaires photométriques) porte S de +0,079 à +0,178 ; de +0,1 mag, à +0,052. La règle de la médiane, écrite avant ce constat, est conservée telle quelle pour ne pas choisir l'ordonnée au vu de S ; la sensibilité est rapportée par le multivers."
   },
   "statistic": {
     "x_low": 0.3,
@@ -268,6 +269,13 @@
     "epoch": [
       false,
       true
+    ],
+    "hr_ordonnee": [
+      "mediane",
+      "mediane-0.2",
+      "mediane-0.1",
+      "mediane+0.1",
+      "mediane+0.2"
     ]
   },
   "epoch": {
@@ -289,5 +297,11 @@
   "acquisition": {
     "drapeaux_absents_max": 0.005,
     "_comment": "v0.9.8 (audit du 20/10/2026) : si, après deux requêtes TAP, plus de 0,5 % des drapeaux all_source_flags demandés manquent, l'acquisition s'arrête (plan B : fichier téléchargé à part, lu strictement). En dessous, les sources sans drapeau sont comptées non propres et leur nombre est consigné dans ACQUISITION_<rel>.json. Règle fixée avant les données DR4, indépendante des vitesses."
+  },
+  "hr_cookson": {
+    "valeur": null,
+    "date_limite": "2026-11-10",
+    "statut": "demandée à S. Cookson ; relance du 21/10/2026",
+    "_comment": "Si Cookson communique l'ordonnée de son parallélogramme avant la date limite, elle est inscrite ici et entre dans le multivers comme spécification nommée « cookson ». Elle ne remplace pas la spécification principale. Sans réponse, rien ne change : le multivers contient de toute façon les ordonnées décalées de ±0,2 mag autour de la médiane."
   }
 }
