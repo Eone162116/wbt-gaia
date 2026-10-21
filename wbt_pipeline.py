@@ -170,9 +170,12 @@ def observe(v_true, sv, rng):
 
 # --------------------------------------------------------------------------- filtre HR
 def hr_band(K_all, slope=3.3, height=0.8):
-    """Parallélogramme le long de la séquence principale (Cookson §3.2.4).
-    Hypothèse : bande centrée sur la médiane de MG - slope*(BP-RP) des étoiles propres
-    (l'intercept exact n'est pas publié)."""
+    """Parallélogramme le long de la séquence principale (structure de Cookson et al. 2026, §3.2.4 ; leur ordonnée n'est pas publiée).
+    v0.9.13, population exacte : b = médiane de MG − slope·(BP−RP) sur TOUTES les composantes (c1/MG1 et c2/MG2) des paires mutuelles
+    de K, avant les coupes finales (distance, séparation, dégroupage, RUWE, vitesses radiales, cribles), limitée à 0,5 < BP−RP < 3,5
+    et 4 < MG < 14 ; une étoile présente dans plusieurs paires compte autant de fois. K résulte de l'appariement par parallaxe et
+    mouvement propre : la médiane n'utilise aucune vitesse relative normalisée, mais sa population dépend de cet appariement.
+    La bande retient |MG − slope·(BP−RP) − b| < height/2."""
     c = np.concatenate([K_all.c1, K_all.c2]); m = np.concatenate([K_all.MG1, K_all.MG2])
     ok = (c > 0.5) & (c < 3.5) & (m > 4) & (m < 14)
     b = np.nanmedian(m[ok]-slope*c[ok])

@@ -14,7 +14,7 @@ CFG = json.load(open("config_prereg.json", encoding="utf-8"))
 REL = sys.argv[1]; STAGE = sys.argv[2]
 P = CFG["primary"]; ST = CFG["statistic"]
 CODE = ["wbt_pipeline.py", "calibrate.py", "blind.py", "run_wbt.py", "fetch_gaia.py", "epoch_accel.py", "contamination.py",
-        "finfer.py", "acquisition.py", "completude.py", "validation_contamination/pgrid.npy", "validation_contamination/pgrid_dr3.npy", "config_prereg.json"]
+        "finfer.py", "acquisition.py", "completude.py", "multivers.py", "validation_contamination/pgrid.npy", "validation_contamination/pgrid_dr3.npy", "config_prereg.json"]
 def frozen_files():
     mes = CFG["calibration"]["contamination"].get("f_in_mode") == "mesure"
     return (CODE + [f"mocks_{REL}.csv", f"envelope_{REL}.csv"] + ([f"finfer_{REL}.csv"] if mes else [])
@@ -205,7 +205,7 @@ if STAGE in ("blind", "all"):
     perm = np.array([cal.step_stat(x, rng_c.permutation(vt_m), ST["x_low"], ST["x_high"]) for _ in range(500)])
     s_bl = cal.step_stat(x, vt_blind, ST["x_low"], ST["x_high"]); z_perm = (s_bl - np.nanmean(perm))/np.nanstd(perm)
     nlo_c, nhi_c = int((x < ST["x_low"]).sum()), int((x > ST["x_high"]).sum())
-    ctrl = dict(
+    ctrl = dict(hr_ordonnee_b=round(float(b), 4),          # v0.9.13 : valeur de l'ordonnée calculée sur cette publication
         permutation=dict(S_aveugle=s_bl, moyenne_permutations=float(np.nanmean(perm)), ecart_type=float(np.nanstd(perm)), z=float(z_perm), ok=bool(abs(z_perm) < 3)),
         injection=dict(S_newton_moyen=float(mocks.newton.mean()), S_mond_moyen=float(mocks.mond.mean()),
                        ok=bool(abs(mocks.newton.mean()) < 0.02 and mocks.mond.mean() > 0.10)),
@@ -252,7 +252,8 @@ if STAGE in ("blind", "all"):
         gj = Jm.groupby(["hyp", "scenario"]).lam
         log(f"test conjoint ({time.time()-t3:.0f} s, {nJ} simulations par scénario) : Λ moyen ± σ "
             + ", ".join(f"{h}/{s_} {gj.mean()[(h, s_)]:+.1f} ± {gj.std()[(h, s_)]:.1f}" for h, s_ in gj.mean().index))
-    log("contrôles avant levée : " + " ; ".join(f"{k} {'OK' if isinstance(v, dict) and v.get('ok', v.get('recouvrement', True)) else ('—' if isinstance(v, str) else 'ÉCHEC')}" for k, v in ctrl.items()))
+    log("contrôles avant levée : " + " ; ".join(f"{k} {'OK' if isinstance(v, dict) and v.get('ok', v.get('recouvrement', True)) else ('—' if isinstance(v, str) else 'ÉCHEC')}" for k, v in ctrl.items() if k != "hr_ordonnee_b")
+        + f" ; ordonnée HR calculée b = {ctrl['hr_ordonnee_b']:.4f}")
     bl.write_completion(f"BLIND_{REL}_complete.json", frozen_files())   # v0.9.4 : blind mené à son terme
     log("blind terminé : marqueur de complétude écrit")
 
@@ -318,18 +319,14 @@ if STAGE == "multiverse":
         raise SystemExit("multivers interdit : RESULT ne correspond pas au gel en cours (fichier étranger ou périmé)")
     K = pd.read_pickle(f"K_{REL}.pkl"); b, slope, _ = hr_band(K)
     if P["hr_intercept"] is not None: b = P["hr_intercept"]
-    G = dict(CFG["multiverse"]); rows = []
-    hc = CFG.get("hr_cookson", {}).get("valeur")              # v0.9.12 : ordonnée de Cookson, seulement si reçue avant la date limite
-    if hc is not None: G["hr_ordonnee"] = list(G["hr_ordonnee"]) + ["cookson"]
-    def _ordonnee(o):                                          # « mediane », « mediane-0.2 », « mediane+0.2 » ou « cookson »
-        return hc if o == "cookson" else b + (float(o[len("mediane"):]) if o != "mediane" else 0.0)
-    for combo in itertools.product(*G.values()):
-        spec = dict(zip(G.keys(), combo)); hrh = spec.pop("hr"); ho = spec.pop("hr_ordonnee", "mediane")
-        if REL == "dr3" and (spec["screen"] == "dr4" or spec.get("epoch")): continue
-        if hrh is None and ho != "mediane": continue           # sans filtre HR, l'ordonnée ne joue pas
-        m, vt = select(K, (_ordonnee(ho), slope, hrh or 0.8), hr=hrh is not None, ipd=P["ipd"], **spec)
+    import multivers as mv                                     # v0.9.13 : énumération testable, garde Cookson, résumé par axe
+    hc = mv.check_cookson(CFG.get("hr_cookson")); rows = []
+    for spec, hrh, ho in mv.specs(CFG["multiverse"], REL, hc):
+        m, vt = select(K, (mv.ordonnee(ho, b, hc), slope, hrh or 0.8), hr=hrh is not None, ipd=P["ipd"], **spec)
         x, v = K.x.values[m], vt[m]
-        rows.append(dict(**spec, hr=hrh, hr_ordonnee=ho, hr_b=round(_ordonnee(ho), 4), n=int(m.sum()),
+        rows.append(dict(**spec, hr=hrh, hr_ordonnee=ho, hr_b=round(mv.ordonnee(ho, b, hc), 4), n=int(m.sum()),
                          S=cal.step_stat(x, v, ST["x_low"], ST["x_high"])))
     R = pd.DataFrame(rows); R.to_csv(f"multiverse_{REL}.csv", index=False)
-    log(f"multivers : {len(R)} spécifications ; S médian {R.S.median():+.3f} ; part S > +0,075 : {(R.S > 0.075).mean():.2f}")
+    mv.by_axis(R, [k for k in CFG["multiverse"] if k in R.columns]).to_csv(f"multiverse_{REL}_par_axe.csv", index=False)
+    log(f"multivers : {len(R)} spécifications ; S médian {R.S.median():+.3f} ; part S > +0,075 : {(R.S > 0.075).mean():.2f} "
+        f"(descriptif, pas une probabilité ; détail par axe : multiverse_{REL}_par_axe.csv)")

@@ -64,7 +64,7 @@
     "screen": "dr4",
     "rv_gof_max": 4.0,
     "epoch": true,
-    "_hr_intercept_regle": "Spécification principale (décision du 21/10/2026) : hr_intercept = null, c'est-à-dire l'ordonnée calculée sur les données de la publication analysée, médiane de M_G − 3,3 (BP−RP) sur les composantes des paires candidates (0,5 < BP−RP < 3,5 ; 4 < M_G < 14), photométrie seule, aucune vitesse. Structure du filtre reprise de Cookson et al. 2026 (pente 3,3, hauteur 0,8 mag), dont l'ordonnée n'est pas publiée. Sensibilité constatée sur DR3 le 21/10/2026, après la levée : décaler la bande de −0,1 mag (vers les étoiles plus brillantes, où se trouvent les binaires photométriques) porte S de +0,079 à +0,178 ; de +0,1 mag, à +0,052. La règle de la médiane, écrite avant ce constat, est conservée telle quelle pour ne pas choisir l'ordonnée au vu de S ; la sensibilité est rapportée par le multivers."
+    "_hr_intercept_regle": "Spécification principale : hr_intercept = null, soit b = médiane de MG − 3,3 (BP−RP) calculée par wbt_pipeline.hr_band sur TOUTES les composantes des paires mutuelles de K (avant les coupes finales de distance, séparation, dégroupage, RUWE, vitesses radiales et cribles), limitée à 0,5 < BP−RP < 3,5 et 4 < MG < 14, une étoile présente dans plusieurs paires comptant autant de fois. Grandeurs utilisées : magnitude absolue et couleur (photométrie et parallaxe), aucune vitesse relative ; mais la population dépend de l'appariement par parallaxe et mouvement propre qui construit K. La valeur de b calculée sur la publication analysée est consignée dans CONTROLS_<rel>_aveugle.json (gelé). Chronologie (21/10/2026) : la formule existait comme repli ; elle a été promue spécification principale inconditionnelle le 21/10, pour ne plus dépendre d'une réponse extérieure, alors que l'on croyait l'enjeu faible. La forte sensibilité de S à la position de la bande a été constatée le même jour, en testant cette décision : sur DR3, un décalage de −0,1 mag porte S de +0,079 à +0,178, et +0,1 mag le ramène à +0,052. La décision a été maintenue pour ne pas choisir l'ordonnée au vu de S ; les variantes d'ordonnée du multivers ont été ajoutées après ce constat et restent secondaires."
   },
   "statistic": {
     "x_low": 0.3,
@@ -302,6 +302,9 @@
     "valeur": null,
     "date_limite": "2026-11-10",
     "statut": "demandée à S. Cookson ; relance du 21/10/2026",
-    "_comment": "Si Cookson communique l'ordonnée de son parallélogramme avant la date limite, elle est inscrite ici et entre dans le multivers comme spécification nommée « cookson ». Elle ne remplace pas la spécification principale. Sans réponse, rien ne change : le multivers contient de toute façon les ordonnées décalées de ±0,2 mag autour de la médiane."
+    "_comment": "Si Cookson communique l'ordonnée de son parallélogramme, saisir valeur (ordonnée du CENTRE de la bande ; convertir une borne si besoin), nature = « centre », recue_le (AAAA-MM-JJ, date du courriel) et source (courriel archivé). multivers.check_cookson refuse une valeur reçue après date_limite, ou sans date, source ou nature. Elle entre alors dans le multivers comme spécification nommée « cookson », sans remplacer la spécification principale. Sans réponse, valeur reste null : rien n'est ajouté après coup.",
+    "recue_le": null,
+    "source": null,
+    "nature": null
   }
 }

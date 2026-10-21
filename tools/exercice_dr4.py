@@ -33,7 +33,7 @@ DIRTY = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"],
 UNTRACKED = subprocess.run(["git", "ls-files", "--others", "--exclude-standard"], capture_output=True, text=True, cwd=ROOT).stdout.split()
 TRACKED = set(subprocess.run(["git", "ls-files"], capture_output=True, text=True, cwd=ROOT).stdout.splitlines())
 REQUIRED = ["run_wbt.py", "wbt_pipeline.py", "calibrate.py", "blind.py", "fetch_gaia.py", "epoch_accel.py", "contamination.py",
-            "finfer.py", "acquisition.py", "completude.py", "jointlik.py", "eccfit.py", "config_prereg.json",
+            "finfer.py", "acquisition.py", "completude.py", "multivers.py", "jointlik.py", "eccfit.py", "config_prereg.json",
             "validation_contamination/pgrid.npy", "validation_contamination/pgrid_dr3.npy"]
 NOT_TRACKED = [f for f in REQUIRED if f not in TRACKED]       # v0.9.8 : fichiers requis non suivis = jamais copiés (audit v0.9.7, P1)
 if NOT_TRACKED: sys.exit("ARRÊT : fichiers requis non suivis par Git (ils ne seraient pas copiés) : " + ", ".join(NOT_TRACKED)
