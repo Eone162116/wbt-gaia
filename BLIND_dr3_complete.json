@@ -1,18 +1,19 @@
 {
-  "completed_at_utc": "2026-10-20T16:30:51Z",
+  "completed_at_utc": "2026-10-21T19:04:44Z",
   "files": {
     "wbt_pipeline.py": "8f6523ad90363323dbec8dbcbcbc1323e688c1f7782a5336b10757dbfffe153e",
-    "calibrate.py": "8faaac89301919bd77afb849511f6f50e07a9adb88720ba1ff8cc9b3ffa5c1b5",
+    "calibrate.py": "fb4306b2a1208d0ea4e3711e18c928e1f36d5a21c698c63a022d53a432ff82ae",
     "blind.py": "dad649e9dfe2e29acb6123f2eee642e84312995b2ca31979c41294b621a39433",
-    "run_wbt.py": "7aedc21c33c687ea5a7acd47a06d28a20bd8c5127d6eea7a6166ad1963f34a27",
+    "run_wbt.py": "063d1b82aa302aadcfa29fb8996980c98c036cd789d92d0864c9d1e10cd5f8b4",
     "fetch_gaia.py": "63df55c9617ee0e49dcfd7c37e7310a73e51cde0aecfa649f0f399b8a6de53e4",
     "epoch_accel.py": "a6ed8cca4f5bfb0fb7f39d9993217f8f1a37fc5eb295c8326feef379706c7fff",
-    "contamination.py": "b45ae0abb33f6323e0a3ecac58174aa2b46e71cf785520d0eb64c40422b3779a",
+    "contamination.py": "07f6476f5276861ab9cc8b83adcefb401e1a5c427dbf904b55b44818910b62c1",
     "finfer.py": "54c0a3d6c9da2e164a24eadb79d8e698f4eec1883c27edbaa604e6503928086c",
     "acquisition.py": "ce4b5d665a5454cf816e9d6b43853c06e0fb74e3434c70b302ba29aeea22f249",
+    "completude.py": "60e47c0191817e0f674c6a64bc8cdcdb75e0edad09a60a9e9f20f44aa72b80fe",
     "validation_contamination/pgrid.npy": "8bb4ebefaf8b581b2f71adcf01ea6141b85380068bd78f25ee5c246262b5b6c0",
     "validation_contamination/pgrid_dr3.npy": "54dff79c0354bc4fbcea00b50818aeb01316527b70fb80f2721e3507989c255c",
-    "config_prereg.json": "88afc4552c6efcf39d2ba7370f872a83acc6dc2cbd958d33e1c2575048f59ca5",
+    "config_prereg.json": "d8007e2ffdb7c5e07f60e537b12476f0dcb3b9bc97b6366f995981491eb9ff97",
     "mocks_dr3.csv": "e4a710a26df1a3eae1b04bd92bf6068fe462bf851666af64744104161757b264",
     "envelope_dr3.csv": "f5ea286ef2b5258773d813b8cd1a47e907753252d66ea706a0fec150f552de1e",
     "finfer_dr3.csv": "36e80b11039b273236be48aee97eb29c008baee5038dff64713c594c07e033dc",
@@ -23,6 +24,7 @@
     "eccfit.py": "1b70e28751fb03d9964743538ecf1a6219d555779580c276dac6127dfdd0d463",
     "joint_dr3.npz": "247ede496c4a56742633dee28bb48b8c47c68398fade1aa5d2af474c785bc5c0",
     "joint_mocks_dr3.csv": "9636751841e14eb1d1fc397cd21a28420a8c9881597b4257eba1c53268aed7a8",
-    "jointlik.py": "1bd70fdb45fd871ef8039ea4963a979ec870f4ce6d1f64a9901b928de94ca7da"
+    "jointlik.py": "9e75bb4837749d12feace8398c034b3f8ba4cd1b421543060af6dc0bb1e39295",
+    "COMPLETUDE_dr3.json": "eea216f3d50bf016b1fdeacac36e2538793f18653c4251a4b819e14a921f8fdb"
   }
 }

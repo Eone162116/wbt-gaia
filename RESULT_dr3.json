@@ -172,8 +172,8 @@
   "verdict": "Non concluant",
   "N": 1189,
   "binned_log10_newton_over_mond": 0.6692543639227049,
-  "unblinded_utc": "2026-10-20T16:30:58Z",
-  "freeze_manifest": "da6749a98fb86ad91eea6e5375eb17c69512464de08be82f0f62e1e0397538ea",
+  "unblinded_utc": "2026-10-21T19:05:02Z",
+  "freeze_manifest": "4f21533b5c81b5409363b2512daba9304270008e2716a09aec17bb67aaa7731c",
   "n_bas": 567,
   "n_haut": 155,
   "conjoint": {

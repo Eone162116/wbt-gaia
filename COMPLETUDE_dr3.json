@@ -1,0 +1,274 @@
+{
+ "simulations_pures_S": {
+  "newton": {
+   "paires_tout": 59450000,
+   "perdues_tout": 0,
+   "paires_bas": 28350000,
+   "perdues_bas": 0,
+   "paires_haut": 7750000,
+   "perdues_haut": 0,
+   "fractions": {
+    "tout": 0.0,
+    "bas": 0.0,
+    "haut": 0.0
+   },
+   "max_frac": 0.001
+  },
+  "mond": {
+   "paires_tout": 59450000,
+   "perdues_tout": 0,
+   "paires_bas": 28350000,
+   "perdues_bas": 0,
+   "paires_haut": 7750000,
+   "perdues_haut": 0,
+   "fractions": {
+    "tout": 0.0,
+    "bas": 0.0,
+    "haut": 0.0
+   },
+   "max_frac": 0.001
+  },
+  "newton_mes_central": {
+   "paires_tout": 59450000,
+   "perdues_tout": 0,
+   "paires_bas": 28350000,
+   "perdues_bas": 0,
+   "paires_haut": 7750000,
+   "perdues_haut": 0,
+   "fractions": {
+    "tout": 0.0,
+    "bas": 0.0,
+    "haut": 0.0
+   },
+   "max_frac": 0.001
+  },
+  "mond_mes_central": {
+   "paires_tout": 59450000,
+   "perdues_tout": 0,
+   "paires_bas": 28350000,
+   "perdues_bas": 0,
+   "paires_haut": 7750000,
+   "perdues_haut": 0,
+   "fractions": {
+    "tout": 0.0,
+    "bas": 0.0,
+    "haut": 0.0
+   },
+   "max_frac": 0.001
+  },
+  "newton_mes_pire_newton": {
+   "paires_tout": 59450000,
+   "perdues_tout": 0,
+   "paires_bas": 28350000,
+   "perdues_bas": 0,
+   "paires_haut": 7750000,
+   "perdues_haut": 0,
+   "fractions": {
+    "tout": 0.0,
+    "bas": 0.0,
+    "haut": 0.0
+   },
+   "max_frac": 0.001
+  },
+  "mond_mes_pire_newton": {
+   "paires_tout": 59450000,
+   "perdues_tout": 0,
+   "paires_bas": 28350000,
+   "perdues_bas": 0,
+   "paires_haut": 7750000,
+   "perdues_haut": 0,
+   "fractions": {
+    "tout": 0.0,
+    "bas": 0.0,
+    "haut": 0.0
+   },
+   "max_frac": 0.001
+  },
+  "newton_mes_pire_mond": {
+   "paires_tout": 59450000,
+   "perdues_tout": 0,
+   "paires_bas": 28350000,
+   "perdues_bas": 0,
+   "paires_haut": 7750000,
+   "perdues_haut": 0,
+   "fractions": {
+    "tout": 0.0,
+    "bas": 0.0,
+    "haut": 0.0
+   },
+   "max_frac": 0.001
+  },
+  "mond_mes_pire_mond": {
+   "paires_tout": 59450000,
+   "perdues_tout": 0,
+   "paires_bas": 28350000,
+   "perdues_bas": 0,
+   "paires_haut": 7750000,
+   "perdues_haut": 0,
+   "fractions": {
+    "tout": 0.0,
+    "bas": 0.0,
+    "haut": 0.0
+   },
+   "max_frac": 0.001
+  }
+ },
+ "enveloppe_S": {
+  "raghavan2010_0.225": {
+   "paires_tout": 23780000,
+   "perdues_tout": 0,
+   "paires_bas": 11340000,
+   "perdues_bas": 0,
+   "paires_haut": 3100000,
+   "perdues_haut": 0,
+   "fractions": {
+    "tout": 0.0,
+    "bas": 0.0,
+    "haut": 0.0
+   },
+   "max_frac": 0.001
+  },
+  "raghavan2010_0.301": {
+   "paires_tout": 23780000,
+   "perdues_tout": 0,
+   "paires_bas": 11340000,
+   "perdues_bas": 0,
+   "paires_haut": 3100000,
+   "perdues_haut": 0,
+   "fractions": {
+    "tout": 0.0,
+    "bas": 0.0,
+    "haut": 0.0
+   },
+   "max_frac": 0.001
+  },
+  "raghavan2010_0.375": {
+   "paires_tout": 23780000,
+   "perdues_tout": 0,
+   "paires_bas": 11340000,
+   "perdues_bas": 0,
+   "paires_haut": 3100000,
+   "perdues_haut": 0,
+   "fractions": {
+    "tout": 0.0,
+    "bas": 0.0,
+    "haut": 0.0
+   },
+   "max_frac": 0.001
+  },
+  "mdwarf_pokemon_0.140": {
+   "paires_tout": 23780000,
+   "perdues_tout": 0,
+   "paires_bas": 11340000,
+   "perdues_bas": 0,
+   "paires_haut": 3100000,
+   "perdues_haut": 0,
+   "fractions": {
+    "tout": 0.0,
+    "bas": 0.0,
+    "haut": 0.0
+   },
+   "max_frac": 0.001
+  },
+  "mdwarf_pokemon_0.188": {
+   "paires_tout": 23780000,
+   "perdues_tout": 0,
+   "paires_bas": 11340000,
+   "perdues_bas": 0,
+   "paires_haut": 3100000,
+   "perdues_haut": 0,
+   "fractions": {
+    "tout": 0.0,
+    "bas": 0.0,
+    "haut": 0.0
+   },
+   "max_frac": 0.001
+  },
+  "mdwarf_pokemon_0.234": {
+   "paires_tout": 23780000,
+   "perdues_tout": 0,
+   "paires_bas": 11340000,
+   "perdues_bas": 0,
+   "paires_haut": 3100000,
+   "perdues_haut": 0,
+   "fractions": {
+    "tout": 0.0,
+    "bas": 0.0,
+    "haut": 0.0
+   },
+   "max_frac": 0.001
+  }
+ },
+ "test_conjoint": {
+  "newton_central": {
+   "paires_tout": 5945000,
+   "perdues_tout": 0,
+   "paires_bas": 2835000,
+   "perdues_bas": 0,
+   "paires_haut": 775000,
+   "perdues_haut": 0,
+   "fractions": {
+    "tout": 0.0,
+    "bas": 0.0,
+    "haut": 0.0
+   },
+   "max_frac": 0.001
+  },
+  "newton_pire_newton_f_haut": {
+   "paires_tout": 5945000,
+   "perdues_tout": 0,
+   "paires_bas": 2835000,
+   "perdues_bas": 0,
+   "paires_haut": 775000,
+   "perdues_haut": 0,
+   "fractions": {
+    "tout": 0.0,
+    "bas": 0.0,
+    "haut": 0.0
+   },
+   "max_frac": 0.001
+  },
+  "mond_central": {
+   "paires_tout": 5945000,
+   "perdues_tout": 0,
+   "paires_bas": 2835000,
+   "perdues_bas": 0,
+   "paires_haut": 775000,
+   "perdues_haut": 0,
+   "fractions": {
+    "tout": 0.0,
+    "bas": 0.0,
+    "haut": 0.0
+   },
+   "max_frac": 0.001
+  },
+  "mond_pire_mond_f0": {
+   "paires_tout": 5945000,
+   "perdues_tout": 0,
+   "paires_bas": 2835000,
+   "perdues_bas": 0,
+   "paires_haut": 775000,
+   "perdues_haut": 0,
+   "fractions": {
+    "tout": 0.0,
+    "bas": 0.0,
+    "haut": 0.0
+   },
+   "max_frac": 0.001
+  },
+  "mond_pire_mond_f_haut": {
+   "paires_tout": 5945000,
+   "perdues_tout": 0,
+   "paires_bas": 2835000,
+   "perdues_bas": 0,
+   "paires_haut": 775000,
+   "perdues_haut": 0,
+   "fractions": {
+    "tout": 0.0,
+    "bas": 0.0,
+    "haut": 0.0
+   },
+   "max_frac": 0.001
+  }
+ }
+}
