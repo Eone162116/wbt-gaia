@@ -1,0 +1,10 @@
+Cut (cumulative),Pairs remaining
+Mutual pairs in the catalogue,100949
+Common distance < 150 pc,54579
+Separation 1–30 kau,18052
+Degrouping (snr10),15317
+"RUWE < 1.25, ipd_frac_multi_peak = 0",8955
+"Both RVs, ΔRV < 10 km/s",3071
+σ(ṽ) < 0.1,3053
+"ṽ < 2.5, Δv_sky < 10 km/s",3053
+"HR band (b = 1.861, height 0.8 mag)",1189
