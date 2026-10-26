@@ -235,6 +235,38 @@
           }
         },
         "note": "Les critères (b) et (d) restent non satisfaits, avec de faibles marges, du même ordre que l'incertitude Monte-Carlo. Les sorties du mode rapide, base de la décision, sont archivées dans validation_joint/archive_mode_rapide. Décision inchangée."
+      },
+      "caracterisation_v0914_conditionnel": {
+        "date": "2026-10-25",
+        "code": "v0.9.14 (tirage conditionnel, N simulé = N observé)",
+        "fichier": "validation_joint/promotion_dr3.csv",
+        "puissance_1189": {
+          "S": [
+            0.003,
+            0.007
+          ],
+          "conjoint": [
+            0.38,
+            0.53
+          ]
+        },
+        "puissance_2378": {
+          "S": [
+            0.03,
+            0.07
+          ],
+          "conjoint": [
+            0.79,
+            0.83
+          ]
+        },
+        "biais_sigma": {
+          "masse +20 %": 0.21,
+          "f_in 0,5 hors bande": 0.23,
+          "β haut +0,3": -0.22
+        },
+        "simulations": "150 jeux par hypothèse pour les seuils, 300 pour les taux de rejet",
+        "note": "Caractérisation seulement. Avec le tirage conditionnel, le critère (b) serait désormais satisfait (0,23σ). Le critère (d) n'a pas été réévalué avec ce tirage, et la question est close depuis le 18/10/2026 sans réexamen, par engagement préalable : S reste le test principal. La décomposition exploratoire de Λ sur DR3 rattache sa pente au profilage des nuisances, ce qui conforte cette clôture."
       }
     }
   },

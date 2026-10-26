@@ -141,7 +141,7 @@ dists += [(f"Newton: contamination, {SHAPE.get(sh, sh)}, f_in = {f:.2f}", g.S.va
 dists += [(nice(c), M[c].dropna().values, MOND) for c in M.columns if c.startswith("mond")]
 fig, ax = plt.subplots(figsize=(6.2, 0.32*len(dists) + 1.2))
 for k, (lab, d, col) in enumerate(dists):
-    ax.violinplot(d, positions=[k], vert=False, widths=0.8, showextrema=False)["bodies"][0].set(facecolor=col, alpha=0.45)
+    ax.violinplot(d, positions=[k], orientation="horizontal", widths=0.8, showextrema=False)["bodies"][0].set(facecolor=col, alpha=0.45)
     q = np.quantile(d, 1 - 0.00135) if lab.startswith("Newton") else np.quantile(d, 0.00135)
     ax.plot([q, q], [k - 0.35, k + 0.35], c=col, lw=1.2)
 ax.axvline(Sobs, c=OBS, lw=1.4, label=f"observed S = {Sobs:+.3f}")

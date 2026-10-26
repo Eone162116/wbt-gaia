@@ -69,4 +69,5 @@ r2 = out[-1]; r1 = out[0]
 gain = max(r2["conj_MOND_rej_si_Newton"] - r2["S_MOND_rej_si_Newton"], r2["conj_Newton_rej_si_MOND"] - r2["S_Newton_rej_si_MOND"])
 biais = max(abs(v) for k, v in r1.items() if k.startswith("biais_"))
 print(f"CRITÈRE (a) gain ≥ 0,10 : {gain:+.2f} → {'OK' if gain >= 0.10 else 'NON'} ; (b) biais < 0,5σ : {biais:.2f} → {'OK' if biais < 0.5 else 'NON'}")
-print("PROMOTION :", "OUI" if (gain >= 0.10 and biais < 0.5) else "NON (test conjoint en analyse secondaire)")
+print("Critères (a) et (b) seulement, à titre de caractérisation. La promotion exigeait aussi (c) et (d) (stability_study.py) ;")
+print("elle a été refusée le 18/10/2026 et la question est CLOSE (config decision.promotion.cloture) : S reste le test principal.")
