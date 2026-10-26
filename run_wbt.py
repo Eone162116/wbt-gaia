@@ -322,9 +322,9 @@ if STAGE == "multiverse":
     import multivers as mv                                     # v0.9.13 : énumération testable, garde Cookson, résumé par axe
     hc = mv.check_cookson(CFG.get("hr_cookson")); rows = []
     for spec, hrh, ho in mv.specs(CFG["multiverse"], REL, hc):
-        m, vt = select(K, (mv.ordonnee(ho, b, hc), slope, hrh or 0.8), hr=hrh is not None, ipd=P["ipd"], **spec)
+        m, vt = select(K, (mv.ordonnee(ho, b, hc), mv.pente(ho, slope, hc), hrh or 0.8), hr=hrh is not None, ipd=P["ipd"], **spec)
         x, v = K.x.values[m], vt[m]
-        rows.append(dict(**spec, hr=hrh, hr_ordonnee=ho, hr_b=round(mv.ordonnee(ho, b, hc), 4), n=int(m.sum()),
+        rows.append(dict(**spec, hr=hrh, hr_ordonnee=ho, hr_b=round(mv.ordonnee(ho, b, hc), 4), hr_pente=round(mv.pente(ho, slope, hc), 4), n=int(m.sum()),
                          S=cal.step_stat(x, v, ST["x_low"], ST["x_high"])))
     R = pd.DataFrame(rows); R.to_csv(f"multiverse_{REL}.csv", index=False)
     mv.by_axis(R, [k for k in CFG["multiverse"] if k in R.columns]).to_csv(f"multiverse_{REL}_par_axe.csv", index=False)

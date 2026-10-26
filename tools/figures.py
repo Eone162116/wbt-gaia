@@ -79,6 +79,10 @@ ax[0].scatter(c_all, m_all, s=0.3, c=GREY, alpha=0.25, rasterized=True, label="a
 ax[0].scatter(c_s, m_s, s=1.5, c=NEWTON, rasterized=True, label="primary sample")
 cc = np.linspace(0.5, 3.5, 2)
 for dy, ls in ((0, "-"), (-P["hr_height"]/2, "--"), (P["hr_height"]/2, "--")): ax[0].plot(cc, b + slope*cc + dy, ls, c="k", lw=0.8)
+import multivers as _mv
+_hc = _mv.check_cookson(CFG.get("hr_cookson"))
+if _hc is not None:                                           # v0.9.16 : droite de Cookson (spécification nommée du multivers)
+    ax[0].plot(cc, _hc[0] + _hc[1]*cc, ":", c=MOND, lw=1.2, label="Cookson et al. line (multiverse)")
 ax[0].set(xlim=(0, 4), ylim=(16, 2), xlabel="BP − RP", ylabel="M_G", title="Colour–magnitude diagram and HR band"); ax[0].legend(markerscale=6, loc="lower left")
 ax[1].scatter(K.d, K.rsky/1e3, s=0.3, c=GREY, alpha=0.2, rasterized=True); ax[1].scatter(S_.d, S_.rsky/1e3, s=2, c=NEWTON, rasterized=True)
 ax[1].set(yscale="log", xlabel="Common distance (pc)", ylabel="Projected separation (kau)", title="Separation–distance plane")

@@ -6,22 +6,30 @@ import itertools
 import pandas as pd
 
 def check_cookson(h):
-    """Renvoie l'ordonnée de Cookson (centre de la bande) si elle est utilisable, sinon None. Garde (v0.9.13) : date de réception,
-    source et nature obligatoires ; une valeur reçue après la date limite est refusée, au lieu d'être ajoutée après coup."""
-    v = (h or {}).get("valeur")
-    if v is None: return None
+    """Renvoie la droite de Cookson (ordonnée c, pente m du CENTRE de la bande) si elle est utilisable, sinon None.
+    Garde (v0.9.13) : date de réception, source et nature obligatoires ; une valeur reçue après la date limite est refusée.
+    v0.9.16 : la droite peut être donnée par deux points (champ « points », comme dans le code de Cookson : y = m x + c passant par
+    (col_lower, mag_lower) et (col_upper, mag_upper)), ou par « valeur » (ordonnée) et « pente » (3,3 par défaut)."""
+    h = h or {}
+    if h.get("valeur") is None and not h.get("points"): return None
     if not h.get("recue_le") or not h.get("source"):
         raise SystemExit("valeur de Cookson sans date de réception (recue_le) ou sans source archivée : non utilisable")
     if str(h["recue_le"]) > str(h["date_limite"]):
         raise SystemExit(f"valeur de Cookson reçue le {h['recue_le']}, après la date limite {h['date_limite']} : non utilisable")
     if h.get("nature") != "centre":
-        raise SystemExit("préciser nature = « centre » : l'ordonnée doit être celle du CENTRE de la bande (convertir une borne avant saisie)")
-    return float(v)
+        raise SystemExit("préciser nature = « centre » : la droite doit être celle du CENTRE de la bande (convertir une borne avant saisie)")
+    if h.get("points"):
+        (x1, y1), (x2, y2) = h["points"]; pente = (y1 - y2)/(x1 - x2); return (float(y2 - x2*pente), float(pente))
+    return (float(h["valeur"]), float(h.get("pente", 3.3)))
 
 def ordonnee(o, b, hc=None):
     """Ordonnée du centre de la bande pour une modalité : « mediane », « mediane±d » ou « cookson »."""
-    if o == "cookson": return hc
+    if o == "cookson": return hc[0]
     return b + (float(o[len("mediane"):]) if o != "mediane" else 0.0)
+
+def pente(o, slope, hc=None):
+    """Pente de la bande : celle de la configuration, sauf pour « cookson » (sa propre pente, 10/3 dans son code)."""
+    return hc[1] if o == "cookson" else slope
 
 def specs(G, rel, hc=None):
     """Liste des spécifications (dict des options de select, hauteur HR, modalité d'ordonnée), dans l'ordre du produit cartésien."""

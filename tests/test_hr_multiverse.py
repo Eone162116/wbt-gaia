@@ -15,7 +15,7 @@ assert in_hr(np.array([1.0]), np.array([b + 3.3 + 0.39]), b, 3.3, 0.8)[0] and no
 # 2. ordonnées du multivers
 for o, d in (("mediane", 0.0), ("mediane-0.2", -0.2), ("mediane-0.1", -0.1), ("mediane+0.1", 0.1), ("mediane+0.2", 0.2)):
     assert abs(mv.ordonnee(o, 1.861, None) - (1.861 + d)) < 1e-12, o
-assert mv.ordonnee("cookson", 1.861, 2.05) == 2.05
+assert mv.ordonnee("cookson", 1.861, (2.05, 3.4)) == 2.05 and mv.pente("cookson", 3.3, (2.05, 3.4)) == 3.4 and mv.pente("mediane+0.1", 3.3, None) == 3.3
 # 3. dénombrement avec la configuration réelle : 396 / 1584 sans Cookson, 468 / 1872 avec
 G = json.load(open("config_prereg.json", encoding="utf-8"))["multiverse"]
 n = {(rel, hc is not None): len(mv.specs(G, rel, hc)) for rel in ("dr3", "dr4") for hc in (None, 2.0)}
@@ -28,7 +28,10 @@ assert len(prim) == 1, f"spécification principale trouvée {len(prim)} fois"
 assert P["hr_intercept"] is None, "la spécification principale doit utiliser la médiane (hr_intercept nul)"
 # 4. garde de la valeur de Cookson
 ok = dict(valeur=2.0, date_limite="2026-11-10", recue_le="2026-11-03", source="courriel archivé", nature="centre")
-assert mv.check_cookson(dict(ok, valeur=None)) is None and mv.check_cookson(ok) == 2.0
+assert mv.check_cookson(dict(ok, valeur=None)) is None and mv.check_cookson(ok) == (2.0, 3.3)
+pts = dict(ok, valeur=None, points=[[0.5, 4.0], [3.5, 14.0]])                  # droite de Cookson, par deux points (courriel du 26/10/2026)
+c_, m_ = mv.check_cookson(pts); assert abs(m_ - 10/3) < 1e-12 and abs(c_ - 7/3) < 1e-12, (c_, m_)
+assert abs(m_*0.5 + c_ - 4.0) < 1e-12 and abs(m_*3.5 + c_ - 14.0) < 1e-12
 for bad in (dict(ok, recue_le="2026-11-12"), dict(ok, recue_le=None), dict(ok, source=None), dict(ok, nature="borne inférieure")):
     try: mv.check_cookson(bad); raise AssertionError(f"valeur de Cookson non refusée : {bad}")
     except SystemExit: pass

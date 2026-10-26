@@ -333,10 +333,20 @@
   "hr_cookson": {
     "valeur": null,
     "date_limite": "2026-11-10",
-    "statut": "demandée à S. Cookson ; relance du 21/10/2026",
-    "_comment": "Si Cookson communique l'ordonnée de son parallélogramme, saisir valeur (ordonnée du CENTRE de la bande ; convertir une borne si besoin), nature = « centre », recue_le (AAAA-MM-JJ, date du courriel) et source (courriel archivé). multivers.check_cookson refuse une valeur reçue après date_limite, ou sans date, source ou nature. Elle entre alors dans le multivers comme spécification nommée « cookson », sans remplacer la spécification principale. Sans réponse, valeur reste null : rien n'est ajouté après coup.",
-    "recue_le": null,
-    "source": null,
-    "nature": null
+    "statut": "reçue le 26/10/2026, avant la date limite : spécification nommée « cookson » du multivers ; la spécification principale reste la médiane",
+    "_comment": "Si Cookson communique l'ordonnée de son parallélogramme, saisir valeur (ordonnée du CENTRE de la bande ; convertir une borne si besoin), nature = « centre », recue_le (AAAA-MM-JJ, date du courriel) et source (courriel archivé). multivers.check_cookson refuse une valeur reçue après date_limite, ou sans date, source ou nature. Elle entre alors dans le multivers comme spécification nommée « cookson », sans remplacer la spécification principale. Sans réponse, valeur reste null : rien n'est ajouté après coup. v0.9.16 : saisie par deux points (champ « points ») ; droite résultante M_G = 3,333 (BP−RP) + 2,333, soit 0,5 à 0,6 mag plus faible que la médiane DR3 (1,861 pour une pente de 3,3).",
+    "recue_le": "2026-10-26",
+    "source": "Courriel de S. Cookson du 26/10/2026 (fil « Wide-binary DR4 pre-registration: HR filter intercept », compte Gmail d'E. Michon) : droite par (col_lower, mag_lower) = (0,5 ; 4,0) et (col_upper, mag_upper) = (3,5 ; 14,0), y = m x + c, demi-largeur mag_range = 0,4 ; code : github.com/SteveBz/Bynary",
+    "nature": "centre",
+    "points": [
+      [
+        0.5,
+        4.0
+      ],
+      [
+        3.5,
+        14.0
+      ]
+    ]
   }
 }
