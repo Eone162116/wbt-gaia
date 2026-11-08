@@ -1,0 +1,40 @@
+EXERCICE DR4 À BLANC (complet) — dossier C:\Users\Utilisateur\Documents\wbt-gaia-EXERCICE-DR4-20261108-190331 — commit 20d159a — résultats sans valeur physique
+faux catalogue DR4 : 84 tranches (1.1 min)
+--- étape build ---
+    2877863 étoiles, 241942 liens, 100949 paires mutuelles ; crible DR4 étoile : 0.921
+    flags lus dans C:\Users\Utilisateur\Documents\wbt-gaia-EXERCICE-DR4-20261108-190331\EXERCICE_flags_dr4.csv (au lieu de la requête TAP) ; sha256 ee3666847691372d
+    flags récupérés pour 57854 sources sur 57854 demandées (0 absentes, 0 incomplètes : non propres) ; paires candidates propres : 0.886
+    build : code 0, 0.9 min
+astrométrie par époque synthétique : 20950 composantes sur 22015, 3191 avec accélération injectée (3.3 min)
+--- étape epoch ---
+    crible par époques : téléchargement pour 22015 composantes (≈ 3.3 Go en RAW)
+    crible par époques : 22015 composantes candidates, 20950 avec données, 3226 signalées ; paires candidates : propre 0.648, signalé 0.273, manquant 0.079
+    epoch : code 0, 7.7 min
+--- étape blind ---
+    test conjoint (2820 s, 5000 simulations par scénario) : Λ moyen ± σ mond/central +6.1 ± 4.4, mond/pire_mond_f0 +0.5 ± 4.0, mond/pire_mond_f_haut +0.6 ± 3.7, newton/central -4.0 ± 4.0, newton/pire_newt
+    contrôles avant levée : permutation OK ; injection OK ; effectifs ÉCHEC ; f_in_comparaison OK ; ordonnée HR calculée b = 1.8607
+    blind terminé : marqueur de complétude écrit
+    blind : code 0, 138.2 min
+--- étape freeze ---
+    gel enregistré : 2026-11-08T20:35:02Z manifeste 4030e2833ea79f88
+    freeze : code 0, 0.2 min
+--- étape unblind ---
+      }
+     }
+    }
+    unblind : code 0, 0.1 min
+--- étape multiverse ---
+    multivers : 3744 spécifications ; S médian +0.122 ; part S > +0,075 : 0.71 (descriptif, pas une probabilité ; détail par axe : multiverse_dr4_par_axe.csv)
+    multiverse : code 0, 0.7 min
+  OK  crible par époques appliqué
+  OK  flags lus depuis le fichier
+  OK  f_in mesuré avec le drapeau DR4
+  OK  comparaison f_in époques/RUWE faite
+  OK  mode complet (pas de mode rapide)
+  OK  marqueur de complétude écrit
+  OK  gel et levée
+  OK  test conjoint calculé
+  OK  multivers DR4 (crible et époques inclus)
+  OK  provenance complète (catalogue, drapeaux, époques)
+  OK  complétude des calibrations consignée et gelée
+  OK  sources de données consignées et gelées
