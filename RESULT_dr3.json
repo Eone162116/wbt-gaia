@@ -172,8 +172,8 @@
   "verdict": "Non concluant",
   "N": 1189,
   "binned_log10_newton_over_mond": 0.6692543639227049,
-  "unblinded_utc": "2026-10-21T19:05:02Z",
-  "freeze_manifest": "4f21533b5c81b5409363b2512daba9304270008e2716a09aec17bb67aaa7731c",
+  "unblinded_utc": "2026-11-08T18:03:15Z",
+  "freeze_manifest": "3c8d707f8427903a9128080266e6ffd6e31e69a886a66578935a7f8dd09832dd",
   "n_bas": 567,
   "n_haut": 155,
   "conjoint": {
@@ -243,6 +243,7 @@
   },
   "controles": {
     "avant_levee": {
+      "hr_ordonnee_b": 1.8607,
       "permutation": {
         "S_aveugle": -0.08573499162158138,
         "moyenne_permutations": -0.00016704842003193953,
