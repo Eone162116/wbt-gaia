@@ -270,6 +270,7 @@
       }
     }
   },
+  "multiverse_smax_note": "v0.9.17 (08/11/2026) : axe smax ajouté au multivers, avant la répétition finale et le gel interne du 20/11. Motif : la limite de séparation (1-30 kau) est un réglage de notre sélection qui diffère du code public de Cookson et al. 2026 (aucune limite par défaut). Sur DR3, à 130 pc et avec sa droite HR, notre sélection garde 548 paires, 1285 sans limite de séparation. Cookson (courriel du 26/10/2026) indique un échantillon final de 1225 paires (1421 avant le filtre IPD), exige les deux vitesses radiales et écrit que le filtre HR fait toute la différence : la séparation est donc un axe de robustesse secondaire, pas l'explication établie de l'écart de reproduction. La modalité 30000 est la spécification principale, inchangée ; la modalité 100000 est le rayon de recherche de find_links (rmax_au), c'est-à-dire « sans limite » au sens de notre appariement. Axe descriptif. Chronologie : S sur DR3 était déjà connu à cette date ; aucune donnée DR4 n'existe ; la décision ne dépend d'aucune vitesse DR4.",
   "multiverse": {
     "degroup": [
       null,
@@ -301,6 +302,10 @@
     "epoch": [
       false,
       true
+    ],
+    "smax": [
+      30000,
+      100000
     ],
     "hr_ordonnee": [
       "mediane",

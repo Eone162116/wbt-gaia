@@ -53,7 +53,7 @@ if STAGE in ("build", "all"):
     log(f"{len(df)} étoiles, {len(I)} liens, {len(Pp)} paires mutuelles ; crible DR4 étoile : {df.scr4_star.mean():.3f}")
     if REL == "dr4":                      # flags de all_source_flags pour les seuls candidats plausibles
         import fetch_gaia as fg
-        cand = (K.rsky < 30000) & (K.d < max(CFG["multiverse"]["dmax"])) & K.both_rv
+        cand = (K.rsky < max(CFG["multiverse"]["smax"])) & (K.d < max(CFG["multiverse"]["dmax"])) & K.both_rv
         ids = np.concatenate([K.sid1[cand], K.sid2[cand]])
         nd = len(np.unique(ids))
         if os.environ.get("WBT_FLAGS_FILE"):     # v0.9.6-7 : plan B (fichier téléchargé à part), lu strictement
@@ -86,7 +86,7 @@ if STAGE == "epoch" or (STAGE == "all" and REL == "dr4"):
     # v0.7-C : candidats = coupes indépendantes des vitesses seulement, sans RUWE ni dégroupage ni HR :
     # sur-ensemble des candidats de f_in et de toutes les spécifications du multivers
     hb, hs, _ = hr_band(K)
-    cand, _ = select(K, (hb, hs, 0.8), hr=False, sph=True, dmax=max(G["dmax"]), ruwe=1e9, degroup=None, screen="dr3",
+    cand, _ = select(K, (hb, hs, 0.8), hr=False, sph=True, dmax=max(G["dmax"]), smax=max(G["smax"]), ruwe=1e9, degroup=None, screen="dr3",
                      ipd=False, epoch=False, vtmax=1e9, dvsky=1e9, drv=1e9, svt=P["svt"])
     ids = np.unique(np.concatenate([K.sid1[cand], K.sid2[cand]]))
     log(f"crible par époques : téléchargement pour {len(ids)} composantes (≈ {len(ids)*0.15/1000:.1f} Go en RAW)")

@@ -16,14 +16,14 @@ assert in_hr(np.array([1.0]), np.array([b + 3.3 + 0.39]), b, 3.3, 0.8)[0] and no
 for o, d in (("mediane", 0.0), ("mediane-0.2", -0.2), ("mediane-0.1", -0.1), ("mediane+0.1", 0.1), ("mediane+0.2", 0.2)):
     assert abs(mv.ordonnee(o, 1.861, None) - (1.861 + d)) < 1e-12, o
 assert mv.ordonnee("cookson", 1.861, (2.05, 3.4)) == 2.05 and mv.pente("cookson", 3.3, (2.05, 3.4)) == 3.4 and mv.pente("mediane+0.1", 3.3, None) == 3.3
-# 3. dénombrement avec la configuration réelle : 396 / 1584 sans Cookson, 468 / 1872 avec
+# 3. dénombrement avec la configuration réelle : 792 / 3168 sans Cookson, 936 / 3744 avec (axe smax ajouté en v0.9.17, x2)
 G = json.load(open("config_prereg.json", encoding="utf-8"))["multiverse"]
 n = {(rel, hc is not None): len(mv.specs(G, rel, hc)) for rel in ("dr3", "dr4") for hc in (None, 2.0)}
-assert n == {("dr3", False): 396, ("dr4", False): 1584, ("dr3", True): 468, ("dr4", True): 1872}, n
+assert n == {("dr3", False): 792, ("dr4", False): 3168, ("dr3", True): 936, ("dr4", True): 3744}, n
 # la spécification principale figure une fois, avec l'ordonnée médiane
 P = json.load(open("config_prereg.json", encoding="utf-8"))["primary"]
 prim = [x for x in mv.specs(G, "dr4") if x[1] == P["hr_height"] and x[2] == "mediane" and x[0]["degroup"] == P["degroup"]
-        and x[0]["sph"] == P["sph"] and x[0]["dmax"] == P["dmax"] and x[0]["ruwe"] == P["ruwe"] and x[0]["screen"] == P["screen"] and x[0]["epoch"] == P["epoch"]]
+        and x[0]["sph"] == P["sph"] and x[0]["dmax"] == P["dmax"] and x[0]["ruwe"] == P["ruwe"] and x[0]["screen"] == P["screen"] and x[0]["epoch"] == P["epoch"] and x[0]["smax"] == P["smax"]]
 assert len(prim) == 1, f"spécification principale trouvée {len(prim)} fois"
 assert P["hr_intercept"] is None, "la spécification principale doit utiliser la médiane (hr_intercept nul)"
 # 4. garde de la valeur de Cookson
@@ -35,4 +35,19 @@ assert abs(m_*0.5 + c_ - 4.0) < 1e-12 and abs(m_*3.5 + c_ - 14.0) < 1e-12
 for bad in (dict(ok, recue_le="2026-11-12"), dict(ok, recue_le=None), dict(ok, source=None), dict(ok, nature="borne inférieure")):
     try: mv.check_cookson(bad); raise AssertionError(f"valeur de Cookson non refusée : {bad}")
     except SystemExit: pass
-print("tests du filtre HR et du multivers : OK (4 groupes, 396/1584 et 468/1872 spécifications)")
+# 5. v0.9.17 : axe smax. La modalité principale est la première ; les coupes de candidats couvrent la plus grande modalité
+import inspect
+from wbt_pipeline import select, find_links
+assert G["smax"][0] == P["smax"] == 30000 and sorted(G["smax"]) == G["smax"], G["smax"]
+assert inspect.signature(find_links).parameters["rmax_au"].default >= max(G["smax"]), "l'appariement tronquerait la plus grande modalité de smax"
+src = open("run_wbt.py", encoding="utf-8").read()
+assert 'K.rsky < max(CFG["multiverse"]["smax"])' in src and "K.rsky < 30000" not in src and 'smax=max(G["smax"])' in src, "coupe de candidats codée en dur"
+ex = open("tools/exercice_dr4.py", encoding="utf-8").read()
+assert 'smax=max(Gm["smax"])' in ex, "exercice DR4 : coupe de candidats non alignée"
+Kt = pd.DataFrame(dict(d=[100.0]*4, rsky=[20000., 40000., 90000., 150000.], ruwe_max=[1.0]*4, both_rv=[True]*4, drv=[1.0]*4, svt=[0.01]*4,
+                       vt_sph=[1.0]*4, vt_raw=[1.0]*4, v_sph=[1.0]*4, v_raw=[1.0]*4, ipd_max=[0]*4, nc10=[1]*4, nc40=[1]*4,
+                       c1=[1.0]*4, MG1=[5.0]*4, c2=[1.0]*4, MG2=[5.0]*4, scr4=[True]*4, flags_ok=[True]*4))
+kw = dict(hr=False, ipd=False, degroup=None, screen="dr3", dmax=150)
+m1 = select(Kt, (0.0, 3.3, 0.8), smax=30000, **kw)[0].tolist(); m2 = select(Kt, (0.0, 3.3, 0.8), smax=100000, **kw)[0].tolist()
+assert m1 == [True, False, False, False] and m2 == [True, True, True, False], (m1, m2)
+print("tests du filtre HR et du multivers : OK (5 groupes, 792/3168 et 936/3744 spécifications ; axe smax 30/100 kau)")

@@ -122,7 +122,7 @@ sys.path.insert(0, DST); os.chdir(DST)
 from wbt_pipeline import select, hr_band
 cfg = json.load(open("config_prereg.json", encoding="utf-8")); P = cfg["primary"]; Gm = cfg["multiverse"]
 K = pd.read_pickle("K_dr4.pkl"); hb, hs, _ = hr_band(K)
-cand, _ = select(K, (hb, hs, 0.8), hr=False, sph=True, dmax=max(Gm["dmax"]), ruwe=1e9, degroup=None, screen="dr3", ipd=False,
+cand, _ = select(K, (hb, hs, 0.8), hr=False, sph=True, dmax=max(Gm["dmax"]), smax=max(Gm["smax"]), ruwe=1e9, degroup=None, screen="dr3", ipd=False,
                  epoch=False, vtmax=1e9, dvsky=1e9, drv=1e9, svt=P["svt"])
 ids = np.unique(np.concatenate([K.sid1[cand], K.sid2[cand]])); del K
 t = time.time(); NT = 20 if FUMEE else 40; NCCD = 9; NS = 1e9*86400*365.25
